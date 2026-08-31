@@ -1,6 +1,8 @@
 # Rekonstrukce webu 1:1 — měřený rozsah práce
 
-_Upřesněné zadání: nevzniká nový vzhled. Jde o **rekonstrukci stávajícího webu v jiné technologii** — odchod z WordPressu k vlastnímu řešení. Obsah spravuje **netechnická redakce ADK**._
+_Upřesněné zadání: nevzniká nový vzhled. Jde o **rekonstrukci stávajícího webu v jiné technologii** — odchod z WordPressu k vlastnímu řešení._
+
+> **Pozor na dataci:** tento dokument vznikl, když se počítalo s netechnickou redakcí. Od 31. 8. 2026 platí, že web bude spravovat **pár technicky zdatných lidí** s velkou volností v editoru. Měřená čísla o rozsahu rekonstrukce platí beze změny; úvahy o volbě CMS v sekci 3 jsou nahrazené [06-doporucena-architektura.md](06-doporucena-architektura.md).
 
 Toto zadání mění těžiště projektu: úspěch se neměří tím, jak web vypadá, ale tím, jestli **redakce zvládne po přechodu dělat všechno, co dělala dřív**, a jestli se stránky podařilo replikovat věrně. Následující čísla jsou naměřená na všech 67 stránkách webu.
 
@@ -70,6 +72,8 @@ Prošel jsem všech 67 stránek a spočítal použité Elementor widgety:
 
 ## 3. Co znamená „vlastní řešení + netechnická redakce“ pro volbu CMS
 
+> **Upřesněno 31. 8. 2026:** redakci bude tvořit **pár technicky zdatných lidí**, kterým se má dát spíš víc volnosti. Argumenty níže platí dál (klikací editor, média, drafty jsou pořád potřeba), ale tlak na maximální „blbuvzdornost“ editoru je menší, než tato sekce předpokládá. Rozhodnutí padlo na TinaCMS self-hosted — viz [06-doporucena-architektura.md](06-doporucena-architektura.md).
+
 Tahle kombinace je nejtěžší část zadání, protože táhne dvěma směry:
 
 - **netechnická redakce** chce klikací editor s náhledem, knihovnou obrázků, drafty a tlačítkem „publikovat“
@@ -81,7 +85,7 @@ Reálné možnosti jsou pak tři:
 Vizuální drag-and-drop, plně vaše, MIT. **Ale musíte dostavět:** přihlášení a role, úložiště JSON (databáze), knihovnu médií s uploadem a alt texty, drafty a náhledy, historii verzí, deploy po uložení. To je fakticky **stavba malého CMS** — počítejte několik set hodin a trvalou údržbu. Puck je navíc pre-1.0 (`@puckeditor/core` 0.23.0, starý balíček `@measured/puck` je deprecated).
 
 ### B) Astro + self-hosted headless CMS (Directus / Payload / Strapi)
-Dostanete hotovou administraci: uživatelé, role, média, verzování, i18n, API. Blokový obsah se modeluje jako seznam komponent. Běží na vašem serveru, data jsou vaše, open-source. **Nevýhoda:** editace je formulářová, ne „vidím stránku a klikám do ní“ — a potřebujete server s Node/Docker + databází (dnešní hosting na to nemusí stačit).
+Dostanete hotovou administraci: uživatelé, role, média, verzování, i18n, API. Blokový obsah se modeluje jako seznam komponent. Běží na vašem serveru, data jsou vaše, open-source. **Nevýhoda:** editace je formulářová, ne „vidím stránku a klikám do ní“ — a potřebujete server s Node/Docker + databází (ten je k dispozici, viz [06-doporucena-architektura.md](06-doporucena-architektura.md)).
 
 ### C) Astro + Keystatic (obsah v gitu)
 Nulové provozní náklady, admin běží uvnitř Astra, žádný server navíc. **Nevýhoda:** pro netechnickou redakci je to nejméně přívětivé z trojice a 1 377 médií v gitu je potřeba vyřešit externím úložištěm.

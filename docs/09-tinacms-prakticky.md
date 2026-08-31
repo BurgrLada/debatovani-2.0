@@ -1,6 +1,6 @@
 # TinaCMS prakticky — co umí a kde jsou háčky
 
-_Odpovědi na konkrétní otázky k volbě TinaCMS. Hosting už není omezení._
+_Odpovědi na konkrétní otázky k volbě TinaCMS. Hosting už není omezení; git provider je GitHub._
 
 ## 1. Rich text / WYSIWYG — ano, vlastní
 
@@ -11,7 +11,7 @@ Umí: tučné, kurzívu, kód, nadpisy, odrážkové i číslované seznamy, blo
 Dvě věci, které stojí za pozornost:
 
 - **Vlastní komponenty přímo v textu** — přes `templates` na rich-text poli lze do článku vkládat vlastní prvky (MDX embed): tlačítko, upozornění, citace, vložené video. Redakce je přidá z editoru jako blok uvnitř odstavců.
-- **`overrides`** — dá se omezit, co je v panelu nástrojů vidět. Když nechcete, aby redakce sázela H1 nebo měnila barvy, prostě to schováte. To je přesně ta páka, která u Elementoru chyběla.
+- **`overrides`** — dá se omezit, co je v panelu nástrojů vidět. Když nechcete, aby redakce sázela H1 nebo měnila barvy, prostě to schováte. To je přesně ta páka, která u Elementoru chyběla. **Pro tento projekt zůstanou `overrides` široké** — redakci tvoří pár zdatných lidí a bylo potvrzeno, že mají dostat volnost. Skrývat se bude jen to, co prokazatelně rozbíjí konzistenci (H1, vlastní barvy textu).
 
 Omezení: **tabulky zvládají jen jednořádkové buňky** (žádný odstavec uvnitř buňky). A MDX obsah je do jisté míry vázaný na Tinu — při případném odchodu se komponenty musí namapovat jinam. Čistý Markdown tímhle netrpí.
 
@@ -52,7 +52,7 @@ Technicky triviální: pole typu `string` s textarea, v Astru vyrenderované př
 
 Ale stojí za to to udělat cíleně, protože raw HTML má tři reálné náklady:
 
-1. **Bezpečnost** — kdokoli s přístupem do CMS může vložit `<script>`, cizí iframe nebo tracker. Při šesti a více redaktorech to není teoretické. Mitigace: sanitizovat HTML při buildu, nebo blok zpřístupnit jen roli správce.
+1. **Bezpečnost** — kdokoli s přístupem do CMS může vložit `<script>`, cizí iframe nebo tracker. Při potvrzené redakci (pár technicky zdatných lidí) je to menší riziko než u širokého okruhu netechnických editorů, ale platí to o to víc, kdyby se okruh později rozšířil. Mitigace: sanitizovat HTML při buildu, nebo blok zpřístupnit jen roli správce.
 2. **Ztráta optimalizací** — obrázky v raw HTML neprojdou `astro:assets`, takže žádné WebP ani `srcset`. To je přesně ta věc, kvůli které z Elementoru odcházíte.
 3. **Rozbití layoutu a responzivity** — nikdo to nezkontroluje.
 

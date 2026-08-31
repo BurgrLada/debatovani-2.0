@@ -2,9 +2,9 @@
 
 Redesign webu Asociace debatních klubů z.s. (https://debatovani.cz).
 
-**Fáze:** analýza. Zatím se neprogramuje.
+**Fáze:** analýza uzavřená, architektura rozhodnutá, vstupy potvrzené. Implementace může začít — stav otevřených otázek je v [docs/04-otazky.md](docs/04-otazky.md).
 
-**Zadání:** nevzniká nový vzhled — jde o **rekonstrukci stávajícího webu v jiné technologii** (odchod z WordPressu k vlastnímu řešení). Obsah bude spravovat netechnická redakce ADK. Potvrzená omezení: **vše self-hosted (žádný SaaS)** a **vizuální editace je nutnost**.
+**Zadání:** nevzniká nový vzhled — jde o **rekonstrukci stávajícího webu v jiné technologii** (odchod z WordPressu k vlastnímu řešení). Obsah bude spravovat **pár technicky zdatných lidí**, kterým se má dát v editoru spíš víc volnosti. Potvrzená omezení: **žádný SaaS pro CMS a obsah** a **vizuální editace je nutnost**. **Node server s databází je k dispozici** — hosting není omezení. **Git provider je GitHub** — omezení „žádný SaaS“ se netýká vývojové infrastruktury.
 
 ## Podklady
 
@@ -15,17 +15,33 @@ Redesign webu Asociace debatních klubů z.s. (https://debatovani.cz).
 | [docs/03-technologie.md](docs/03-technologie.md) | Hodnocení volby Astro + Puck a alternativ |
 | [docs/04-otazky.md](docs/04-otazky.md) | Otevřené otázky k zodpovězení před návrhem |
 | [docs/05-rekonstrukce-rozsah.md](docs/05-rekonstrukce-rozsah.md) | **Měřený rozsah rekonstrukce** — inventura Elementor widgetů, sada bloků, postup |
-| [docs/06-doporucena-architektura.md](docs/06-doporucena-architektura.md) | **Doporučená architektura** — Puck vs. TinaCMS self-hosted, blocker s hostingem |
+| [docs/06-doporucena-architektura.md](docs/06-doporucena-architektura.md) | **Doporučená architektura** — Puck vs. TinaCMS, provozní model, pořadí inicializace |
 | [docs/07-editory-elementor-like.md](docs/07-editory-elementor-like.md) | **Editory typu Elementor** — Puck, GrapesJS, Webstudio a co z nich pro Astro dává smysl |
-| [docs/08-git-based-cms.md](docs/08-git-based-cms.md) | **Git-based CMS** — Sveltia, Decap, Pages CMS; varianta bez serveru a bez databáze |
+| [docs/08-git-based-cms.md](docs/08-git-based-cms.md) | **Git-based CMS** — Sveltia, Decap, Pages CMS; záložní varianta bez serveru a bez databáze |
 | [docs/09-tinacms-prakticky.md](docs/09-tinacms-prakticky.md) | **TinaCMS prakticky** — WYSIWYG, bloky, vícejazyčnost, custom HTML |
 | [docs/10-i18n-varianty.md](docs/10-i18n-varianty.md) | **Vícejazyčnost** napříč kandidáty — proč Puck + CMS i18n nevyřeší, kde je Payload silnější |
+| [docs/11-design-tokeny.md](docs/11-design-tokeny.md) | **Design tokeny** — paleta a typografie změřená z loga a stávajícího webu, oddělení značky od šablony |
 
-## Rychlé shrnutí
+## Rozhodnutá architektura
+
+**Astro 7 + TypeScript + TinaCMS self-hosted, všechno v jednom projektu.**
+
+- Web je **statické HTML** (`output: 'static'` + adaptér), servírované z cache.
+- Administrace běží jako **`prerender = false` routy uvnitř téhož projektu** — `/admin` a `/api/tina/*` obsluhuje Node proces. Když spadne, web běží dál.
+- Obsah je v **gitu** (Markdown/MDX + JSON), Postgres drží jen index. Média v S3-kompatibilním úložišti.
+- Bloky jsou **`.astro` komponenty se Zod schématem** — editor je jen nadstavba, která do nich sype data.
+- **Rozdělení administrace do samostatné služby je varianta do budoucna**, ne výchozí stav. Sáhne se po ní, až začne vadit redeploy uprostřed editace, kolize React verzí (Puck) nebo sdílené prostředí s přístupovými údaji. Migrace je levná, proto se neřeší dopředu.
+- **Inicializace: nejdřív Astro, pak `@tinacms/cli init`** — ne `create-tina-app`. Detaily a pořadí kroků v [docs/06](docs/06-doporucena-architektura.md), sekce 4.
+- **GitHub Actions** spouští buildy, **GitHub OAuth** přihlašuje do administrace, média na **Cloudflare R2**.
+- **Adresářová konvence pro jazyky od začátku** (`content/<kolekce>/<jazyk>/…`), i když se o rozsahu anglické verze rozhodne později.
+- **Portál debatování je rozšíření** — obsahový model ani routing hlavního webu se od něj neodvozují.
+- **Design tokeny jsou hotové** — [docs/11](docs/11-design-tokeny.md). Značku tvoří limetka `#C8DA2B`, modrá `#00B2EF`, oranžová `#F6862F` a uhel `#15191C`; pastelová linie ze šablony `alone` odchází. Písma: Poppins (nadpisy) + Roboto (text), Roboto Slab se vypouští.
+
+## Rychlé shrnutí analýzy
 
 - Současný web: WordPress 7.0.2 + **Elementor 3.12.1** (aktuální řada 4.2.3 — zaostání ~3 roky), šablona `alone`, 357 článků, 67 stránek.
 - Výkon: 166 kB HTML, 28 CSS + 30 JS souborů, ~2,5 MB assetů na homepage.
 - Akce a přihlášky běží mimo WordPress na vlastním API `api-prod.debata21.cz` (Lumen/Laravel), dnes tažené klientským JS vlepeným do Elementoru.
 - Mapa klubů = Google My Maps embed, dokumenty = Google Drive, přihlášky = Google Forms.
 - **94 % obsahu stránek tvoří čtyři widgety** (nadpis, text, obrázek, tlačítko) — rekonstrukce vystačí s ~12 bloky. Těžiště práce je 67 stránek × ~6 sekcí, které se musí překlikat.
-- **Astro + TypeScript: doporučeno.** **Puck: použitelný, ale sám o sobě není CMS** — chybí mu autentizace, média, verzování a drafty; pro netechnickou redakci by se to vše muselo dostavět. Viz [docs/03-technologie.md](docs/03-technologie.md) a [docs/05](docs/05-rekonstrukce-rozsah.md).
+- **Astro + TypeScript: doporučeno.** **Puck: použitelný, ale sám o sobě není CMS** — chybí mu autentizace, média, verzování a drafty; to vše by se muselo dostavět. Viz [docs/03-technologie.md](docs/03-technologie.md) a [docs/05](docs/05-rekonstrukce-rozsah.md).

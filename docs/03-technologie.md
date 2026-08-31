@@ -2,7 +2,7 @@
 
 _Otázka zadání: Astro + TypeScript jako framework, PuckJS jako editor stránek._
 
-> **Upřesnění zadání (27. 8. 2026):** nevzniká nový vzhled — jde o **rekonstrukci stávajícího webu v jiné technologii**, klíčem je přechod od WordPressu k vlastnímu řešení. Obsah bude spravovat **netechnická redakce ADK**. Doporučení v sekci 4 čti spolu s [05-rekonstrukce-rozsah.md](05-rekonstrukce-rozsah.md), kde je tato varianta rozebraná na měřených datech.
+> **Upřesnění zadání (27. 8. 2026):** nevzniká nový vzhled — jde o **rekonstrukci stávajícího webu v jiné technologii**, klíčem je přechod od WordPressu k vlastnímu řešení. Obsah bude spravovat malá redakce ADK (upřesněno 31. 8. 2026: **pár technicky zdatných lidí**). Doporučení v sekci 4 čti spolu s [05-rekonstrukce-rozsah.md](05-rekonstrukce-rozsah.md), kde je tato varianta rozebraná na měřených datech.
 
 ## Shrnutí verdiktu
 
@@ -113,7 +113,7 @@ Redakce nezmění vůbec nic (píše dál v Gutenbergu), 357 článků se nemus�
 
 | Téma | Doporučení |
 |---|---|
-| **Hosting** | Cloudflare Pages nebo Netlify (statické, zdarma, deploy z gitu). Pozor: současný hosting je od **VAS Hosting, který je uvedený mezi partnery** — pravděpodobně sponzorský. Ověřit, jestli tam jde nasadit statický build (jde, jen FTP upload) a jestli by sponzoring skončil odchodem. |
+| **Hosting** | Node server s databází je k dispozici — administrace i statický build poběží na něm (viz [06-doporucena-architektura.md](06-doporucena-architektura.md)). Otevřené zůstává, co s **VAS Hostingem, který je uvedený mezi partnery** — pravděpodobně sponzorský vztah, který odchodem může skončit. |
 | **Formuláře** | WPForms zanikne. Náhrada: Formspree / Web3Forms / vlastní Cloudflare Worker + Turnstile proti spamu. |
 | **Newsletter** | zjistit, jaká služba se používá (v HTML není vidět) a napojit přímo na její API. |
 | **Akce z API** | fetch při buildu + **rebuild webhook** nebo naplánovaný rebuild 1×denně; fallback na klientský fetch pro deadline odpočty. |

@@ -2,6 +2,8 @@
 
 _Doplněk k `06` a `07`. Obsahuje opravu dřívějšího tvrzení o Decapu._
 
+> **Stav k 31. 8. 2026:** Node server s databází je k dispozici, takže hlavní argument této varianty — „bez serveru“ — už není rozhodující. Volba padla na TinaCMS self-hosted (viz [06-doporucena-architektura.md](06-doporucena-architektura.md)). Dokument zůstává jako podklad pro případ, že by se od Tiny ustupovalo.
+
 ## Oprava
 
 V `03-technologie.md` jsem Decap CMS odbyl jako „projekt dlouhodobě málo aktivní“. **To neplatí.** Decap má 19,3 k hvězd, 4 572 commitů a poslední vydání `decap-cms-app` 3.15.1 z **24. 7. 2026**. Stagnace, kterou si projekt vysloužil po přejmenování z Netlify CMS v letech 2023–2024, už neodpovídá dnešnímu stavu.
@@ -27,7 +29,7 @@ Sveltia je **kompletní moderní přepis Netlify/Decap CMS** — kompatibilní s
 
 ## Proč je to pro ADK zajímavější, než se zdálo
 
-**1. Odpadá hostingový blocker.** Tohle je hlavní věc. Decap i Sveltia jsou **statické JavaScriptové aplikace** — nasadí se jako `/admin` na tentýž statický hosting jako web. Žádný Node runtime, žádný Postgres, žádný Docker. Proti TinaCMS self-hosted (Node + databáze + git provider) nebo Puck + Directus (Docker + Postgres) je to úplně jiná provozní liga.
+**1. Odpadá potřeba Node runtime.** Decap i Sveltia jsou **statické JavaScriptové aplikace** — nasadí se jako `/admin` na tentýž statický hosting jako web. Žádný Node runtime, žádný Postgres, žádný Docker. Proti TinaCMS self-hosted (Node + databáze + git provider) nebo Puck + Directus (Docker + Postgres) je to úplně jiná provozní liga.
 
 Jediná serverová část je **malý OAuth proxy** pro přihlášení — typicky Cloudflare Worker nebo pár řádků serverless kódu, existují hotové šablony.
 

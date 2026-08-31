@@ -89,7 +89,7 @@ Počty publikovaných článků podle roku (WP REST API):
 
 _*do 27. 8. 2026_
 
-Tedy **stabilně 35–45 článků ročně, cca 3 měsíčně, 6 autorů**. Redakce je živá a netechnická — to je nejsilnější vstup do rozhodování o CMS.
+Tedy **stabilně 35–45 článků ročně, cca 3 měsíčně, 6 autorů**. Redakce je živá — publikační frekvence je nejsilnější vstup do rozhodování o CMS. (Okruh správců nového webu bude užší: pár technicky zdatných lidí, viz [04-otazky.md](04-otazky.md).)
 
 Nejsilnější rubriky: Debatní liga (140), Zahraničí (74), Asociace (71), Debatiáda (43), Ředitelství soutěží (34), Debate League (31, anglicky).
 
