@@ -1,0 +1,66 @@
+/*
+ * Pohyb a efekty
+ * ==============
+ * Dnešní web má na sekcích Elementor animaci `fadeIn` — obsah se při
+ * odrolování objeví.
+ *
+ * Skrytý výchozí stav zapíná až skript třídou `js-reveal` na `<html>`.
+ * Bez JavaScriptu se tedy nikdy nestane, že by obsah zůstal neviditelný —
+ * a to je u odhalovacích animací ta jediná chyba, která opravdu bolí.
+ *
+ * Proč ne `animation-timeline: view()`: je to sice řešení bez skriptu, ale
+ * mimo Chromium ho zatím nikdo neumí a ani v Chromiu se na něj nedá
+ * spolehnout (timeline umí zůstat neaktivní a animace se pak vůbec
+ * nespustí). IntersectionObserver funguje všude a jde ověřit.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .js-reveal [data-reveal] {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.5s ease-out,
+      transform 0.5s ease-out;
+  }
+
+  .js-reveal [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Při tisku musí být vidět všechno bez ohledu na to, kam se doscrollovalo. */
+@media print {
+  .js-reveal [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+@layer components {
+  /* Karty se při najetí lehce zvednou. */
+  .lift {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -12px rgb(0 0 0 / 0.25);
+  }
+
+  /*
+   * Odkazy v textu: podtržení dorůstá místo skokového zapnutí/vypnutí.
+   */
+  .prose-adk a {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 100% 1px;
+    text-decoration: none;
+    transition: background-size 0.2s ease;
+  }
+  .prose-adk a:hover {
+    background-size: 100% 2px;
+  }
+}

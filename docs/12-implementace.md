@@ -45,6 +45,7 @@ src/
   pages/              routy; `[...path].astro` mapuje cestu souboru na URL
   pages/portal/       Portál debatování — přenesený 1:1, mimo blokový systém
   styles/tokens.css   **jediné místo s hex hodnotami barev**
+  styles/motion.css   pohyb a efekty (objevování bloků, hovery)
 scripts/              migrace z WordPressu (opakovatelná)
 ```
 
@@ -100,6 +101,9 @@ Co skripty řeší, protože to jinak tiše rozbije obsah:
   novém webu neběží; dekódují se zpátky na `mailto:`
 - **Unicode v názvech souborů** — WP REST vrací názvy v rozloženém tvaru (NFD),
   server je servíruje ve složeném (NFC); bez normalizace vrací stahování 404
+- **úvodní pás podstránky** — Elementor ho skládá z fotky na pozadí a dvou
+  nadpisů. Bez rozpoznání by z něj vyšel textový blok na obrázku, tedy tenký
+  proužek s useknutou fotkou; migrace z něj dělá hero blok.
 - **`_fields=content` u `wp/v2/pages`** vrací nevalidní JSON (plugin do
   odpovědi vypisuje HTML), takže se obsah klasických stránek bere z vykreslené
   stránky, ne z API

@@ -51,8 +51,11 @@ export async function fetchAll(endpoint, params = {}) {
  * Vrací cestu použitelnou v obsahu (`/media/…`), nebo null když to selže.
  */
 export async function downloadMedia(remoteUrl, localPath, { force = false } = {}) {
-	const publicPath = `public${localPath.normalize('NFC')}`;
-	if (!force && (await exists(publicPath))) return localPath;
+	// Cesta se normalizuje na NFC na jednom místě, protože stejnou podobu musí
+	// mít soubor na disku i odkaz v obsahu — jinak build hlásí chybějící obrázek.
+	const path = localPath.normalize('NFC');
+	const publicPath = `public${path}`;
+	if (!force && (await exists(publicPath))) return path;
 
 	try {
 		// Část souborů má v názvu diakritiku. WP REST je vrací v rozloženém
@@ -64,7 +67,7 @@ export async function downloadMedia(remoteUrl, localPath, { force = false } = {}
 		});
 		if (!response.ok) return null;
 		await writeFileEnsured(publicPath, Buffer.from(await response.arrayBuffer()));
-		return localPath;
+		return path;
 	} catch {
 		return null;
 	}
@@ -190,7 +193,7 @@ export async function localizeDocuments(markdown, downloadTo = '/media/dokumenty
 
 	for (const link of links) {
 		const relative = link.split('/wp-content/uploads/')[1];
-		const localPath = `${downloadTo}/${relative}`;
+		const localPath = `${downloadTo}/${relative}`.normalize('NFC');
 		const remote = link.startsWith('http') ? link : `${WP_BASE}${link}`;
 		if (await downloadMedia(remote, localPath)) {
 			result = result.split(link).join(localPath);

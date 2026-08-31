@@ -57,7 +57,7 @@ const headlineLines = (data.headline ?? '').split('\n');
 		{data.subtitle && (
 			<p
 				data-tina-field={tinaField(data, 'subtitle')}
-				class={`mt-8 max-w-2xl text-lg text-inverse ${centered ? 'mx-auto' : ''}`}
+				class={`mt-6 max-w-3xl text-caption leading-relaxed tracking-[var(--tracking-caps)] text-inverse ${centered ? 'mx-auto' : ''}`}
 			>
 				{data.subtitle}
 			</p>

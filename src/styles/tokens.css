@@ -128,7 +128,7 @@
   /* O kolik se zanořená sekce překrývá se sousedy (blok „Zasadit do
    * sousedních sekcí“). Sousedé musí mít aspoň tohle odsazení. */
   --space-overlap: 60px;
-  --header-height: 80px;
+  --header-height: 118px;
 }
 
 /* Breakpointy 1024 a 767 px odpovídají Elementor kitu. Utility `text-hero`

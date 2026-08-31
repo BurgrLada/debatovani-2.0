@@ -34,10 +34,17 @@ interface Props {
 }
 
 const blocks = (Astro.props.blocks ?? []).filter((block): block is PageBlock => block !== null);
+
+/*
+ * `data-reveal` označuje bloky, které se mají při odrolování objevit
+ * (styly v `src/styles/motion.css`). Úvodní pás se vynechává — ten je vidět
+ * hned a animovat ho nedává smysl.
+ */
+const isLeadIn = (index: number) => index === 0;
 ---
 {
-	blocks.map((block) => (
-		<div data-tina-field={tinaField(block)}>
+	blocks.map((block, index) => (
+		<div data-tina-field={tinaField(block)} data-reveal={isLeadIn(index) ? undefined : ''}>
 			{block.__typename === 'PageBlocksHero' && <Hero data={block} />}
 			{block.__typename === 'PageBlocksRichText' && <RichText data={block} />}
 			{block.__typename === 'PageBlocksTextWithImage' && <TextWithImage data={block} />}

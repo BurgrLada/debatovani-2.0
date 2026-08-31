@@ -13,7 +13,7 @@ const lang = langFromPath(Astro.url.pathname);
 const strings = t(lang);
 const href = localizeHref(`/aktuality/${article.slug}/`, lang);
 ---
-<article class="flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface">
+<article class="lift flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface">
 	{article.cover && (
 		<a href={href} class="block">
 			<Image

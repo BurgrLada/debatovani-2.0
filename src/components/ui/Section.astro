@@ -143,26 +143,19 @@ const spacing = [
 
 <style>
 	/*
-	 * Pohyb pozadí při scrollování. Dnešní web tu má Elementor „motion effect“,
-	 * který obrázek při průchodu sekce plynule zvětšuje a zase zmenšuje.
-	 * Tady to dělá animace navázaná na scroll — bez JS a bez knihovny.
+	 * Parallax na pozadí sekce. Dnešní web tu má Elementor „motion effect“,
+	 * který obrázek při průchodu sekce plynule zvětšuje.
 	 *
-	 * Kde prohlížeč `animation-timeline` neumí (dnes hlavně Firefox), zůstane
-	 * pozadí statické. Při zapnutém omezení pohybu se nehýbe nikdy.
+	 * Tady to dělá `background-attachment: fixed` — pozadí stojí, zatímco
+	 * obsah jede přes něj. Není to na chlup stejný efekt jako na produkci,
+	 * ale funguje ve všech prohlížečích a nepotřebuje skript.
+	 *
+	 * Na dotykových zařízeních se vypíná: `fixed` tam bývá rozbité nebo
+	 * skokové, takže je lepší statické pozadí.
 	 */
-	@media (prefers-reduced-motion: no-preference) {
-		@supports (animation-timeline: view()) {
-			.section-parallax {
-				animation: section-parallax linear both;
-				animation-timeline: view();
-				animation-range: cover 0% cover 100%;
-			}
-
-			@keyframes section-parallax {
-				0% { transform: scale(1.12); }
-				50% { transform: scale(1); }
-				100% { transform: scale(1.12); }
-			}
+	@media (prefers-reduced-motion: no-preference) and (min-width: 768px) and (hover: hover) {
+		.section-parallax {
+			background-attachment: fixed;
 		}
 	}
 </style>

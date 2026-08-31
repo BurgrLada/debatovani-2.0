@@ -79,7 +79,10 @@ async function localizeImage(src) {
 	if (!src || !src.includes('/wp-content/uploads/')) return src || null;
 	for (const candidate of [stripSizeSuffix(src), src].filter((u, i, a) => a.indexOf(u) === i)) {
 		const localPath = mediaPathFromUrl(candidate);
-		if (localPath && (await downloadMedia(candidate, localPath))) return localPath;
+		if (!localPath) continue;
+		// `downloadMedia` vrací cestu, pod kterou soubor opravdu leží.
+		const stored = await downloadMedia(candidate, localPath);
+		if (stored) return stored;
 	}
 	return src;
 }
@@ -429,6 +432,72 @@ async function plainWidgetsToBlocks(widgets, context) {
 	return blocks;
 }
 
+/**
+ * Úvodní pás podstránky. Elementor ho skládá z fotky na pozadí a jednoho až
+ * dvou nadpisů; v novém webu je to hero blok, který má vlastní typografii
+ * a nese H1. Bez tohohle rozpoznání by z něj vyšel textový blok na obrázku,
+ * tedy tenký proužek s useknutou fotkou.
+ */
+function heroFromSection(section, backgroundImage) {
+	if (!backgroundImage) return null;
+
+	const widgets = section.columns
+		.flatMap((column) => column.widgets)
+		.filter((widget) => !['spacer', 'divider', 'menu-anchor'].includes(widget.type));
+
+	if (widgets.length === 0 || widgets.length > 2) return null;
+	if (!widgets.every((widget) => widget.type === 'heading' && widget.text)) return null;
+
+	const [headline, subtitle] = widgets;
+	return {
+		_template: 'hero',
+		headline: headline.text,
+		...(subtitle ? { subtitle: subtitle.text } : {}),
+		align: 'center',
+		image: backgroundImage,
+		overlay: true,
+		height: 'medium',
+	};
+}
+
+/**
+ * Sekce s formulářem. Elementor ji staví jako dva sloupce — v jednom nadpis
+ * a text, ve druhém WPForms shortcode. Kdyby se sloupce převedly zvlášť,
+ * vznikly by dva bloky se stejnou fotkou na pozadí a fotka by se na stránce
+ * zopakovala; proto se slévají do jednoho bloku formuláře.
+ */
+async function contactFormBlock(section, context) {
+	const widgets = section.columns.flatMap((column) => column.widgets);
+	const shortcode = widgets.find((widget) => widget.type === 'shortcode');
+	if (!shortcode) return null;
+
+	const heading = widgets.find((widget) => widget.type === 'heading');
+	const intro = widgets
+		.filter((widget) => widget.type === 'text-editor')
+		.map((widget) => widget.text)
+		.filter(Boolean)
+		.join('\n\n');
+
+	note(
+		context.page,
+		'formulář z WPForms nahrazen výchozími poli — zkontrolovat a doplnit odesílání',
+	);
+
+	return {
+		_template: 'contactForm',
+		title: heading?.text ?? 'Napište nám',
+		...headingLook(heading, context),
+		...(intro ? { intro } : {}),
+		submitLabel: 'Odeslat',
+		fields: [
+			{ label: 'Jméno', name: 'jmeno', type: 'text', required: true },
+			{ label: 'E-mail', name: 'email', type: 'email', required: true },
+			{ label: 'Zpráva', name: 'zprava', type: 'textarea' },
+		],
+		...context.section,
+	};
+}
+
 /** Sekce se dvěma sloupci, kde jeden je jen obrázek → text s obrázkem. */
 async function twoColumnBlock(section, context) {
 	const [left, right] = section.columns;
@@ -649,6 +718,22 @@ async function convertPage(page, pathById) {
 				.flatMap((column) => column.widgets)
 				.find((widget) => widget.type === 'menu-anchor')?.anchor;
 			if (anchor) context.pendingAnchor = anchor;
+			continue;
+		}
+
+		// Úvodní pás stránky se přenáší jako hero, ne jako text na pozadí.
+		if (blocks.length === 0) {
+			const hero = heroFromSection(section, backgroundImage);
+			if (hero) {
+				blocks.push(hero);
+				continue;
+			}
+		}
+
+		// Formulář se skládá napříč sloupci, proto se řeší před nimi.
+		const form = await contactFormBlock(section, context);
+		if (form) {
+			blocks.push(form);
 			continue;
 		}
 

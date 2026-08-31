@@ -43,7 +43,7 @@ const columns: Record<string, string> = {
 	)}
 	<ul class={`grid grid-cols-1 gap-8 ${columns[data.columns ?? '3'] ?? columns['3']}`}>
 		{items.map((item) => (
-			<li data-tina-field={tinaField(item)} class="flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface">
+			<li data-tina-field={tinaField(item)} class="lift flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface">
 				{item.image && (
 					<Image src={item.image} alt="" width={600} height={400} format="webp" class="aspect-[3/2] w-full object-cover" />
 				)}

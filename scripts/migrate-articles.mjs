@@ -84,8 +84,11 @@ async function localizeImage(src) {
 	for (const candidate of candidates) {
 		const localPath = mediaPathFromUrl(candidate);
 		if (!localPath) continue;
-		if (!withMedia) return { path: localPath, ok: true };
-		if (await downloadMedia(candidate, localPath)) return { path: localPath, ok: true };
+		if (!withMedia) return { path: localPath.normalize('NFC'), ok: true };
+		// `downloadMedia` vrací cestu, pod kterou soubor opravdu leží — může se
+		// lišit normalizací Unicode, a odkaz v obsahu musí sedět přesně.
+		const stored = await downloadMedia(candidate, localPath);
+		if (stored) return { path: stored, ok: true };
 	}
 	return { path: src, ok: false };
 }

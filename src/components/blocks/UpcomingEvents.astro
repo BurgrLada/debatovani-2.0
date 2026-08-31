@@ -65,7 +65,7 @@ const emptyText = data.emptyText || strings.noEvents;
 		) : (
 			<ul class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 				{events.map((event) => (
-					<li class="flex h-full flex-col rounded-card border border-line bg-surface p-6">
+					<li class="lift flex h-full flex-col rounded-card border border-line bg-surface p-6">
 						<p class="text-caption font-semibold uppercase tracking-wide text-subheading">
 							{formatDateRange(event.start, event.end)}
 						</p>
