@@ -1,0 +1,57 @@
+---
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import type { EmbedBlock } from '../../lib/data';
+
+interface Props { data: EmbedBlock }
+
+const { data } = Astro.props;
+
+/** Běžný odkaz na YouTube není platná adresa pro iframe — převedeme ho. */
+function toEmbedUrl(url: string): string {
+	const youtube = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
+	if (youtube) return `https://www.youtube-nocookie.com/embed/${youtube[1]}`;
+	return url;
+}
+
+const ratios: Record<string, string> = { '16-9': 'aspect-video', '4-3': 'aspect-4/3', tall: 'aspect-3/4' };
+const src = data.url ? toEmbedUrl(data.url) : null;
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.title && (
+		<div data-tina-field={tinaField(data, 'title')}>
+			<Heading
+				level={2}
+				size={(data.titleSize as never) ?? 'section'}
+				tone={(data.titleTone as never) ?? 'heading'}
+				align={(data.titleAlign as never) ?? 'center'} class="mb-8"
+			>{data.title}</Heading>
+		</div>
+	)}
+	{src && (
+		<div data-tina-field={tinaField(data, 'url')} class={`w-full overflow-hidden rounded-card ${ratios[data.ratio ?? '16-9']}`}>
+			<iframe
+				src={src}
+				title={data.title ?? 'Vložený obsah'}
+				loading="lazy"
+				allowfullscreen
+				referrerpolicy="no-referrer-when-downgrade"
+				class="h-full w-full border-0"
+			></iframe>
+		</div>
+	)}
+</Section>

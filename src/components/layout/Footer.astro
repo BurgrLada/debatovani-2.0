@@ -1,0 +1,121 @@
+---
+/**
+ * Patička. Rekonstrukce dnešního stavu: jeden pás s fotkou na pozadí
+ * a tmavě modrým překryvem (#002866, 50 %). Uvnitř dva sloupce — vlevo text
+ * a ikony sociálních sítí v barvách jednotlivých služeb, vpravo newsletter —
+ * a pod nimi vycentrovaný copyright.
+ *
+ * Loga partnerů sem nepatří: na dnešním webu jsou sekcí úvodní stránky
+ * (na ostatních stránkách nejsou vůbec) a vykresluje je blok „Loga partnerů“.
+ *
+ * Přihlášení k newsletteru je pole pro e-mail plus tlačítko, jako na dnešním
+ * webu (tam ho vykresluje widget Ecomailu). Adresa zpracování je pole
+ * v nastavení webu; dokud je prázdná, formulář návštěvníka jen přenese na
+ * stránku newsletteru a **e-mail nikam neodešle** — pole schválně nemá
+ * `name`, takže se nedostane ani do adresy.
+ */
+import { Icon } from 'astro-icon/components';
+import { tinaField } from '@tinacms/astro/tina-field';
+import Container from '../ui/Container.astro';
+import Button from '../ui/Button.astro';
+import type { CmsGlobal } from '../../lib/data';
+
+interface Props {
+	global?: CmsGlobal | null;
+}
+
+const { global } = Astro.props;
+const footer = global?.footer;
+const social = (global?.social ?? []).filter((item) => item !== null);
+const links = (footer?.links ?? []).filter((item) => item !== null);
+
+/** Bez adresy zpracování se e-mail neodesílá, jen se přejde na stránku newsletteru. */
+const configured = !!footer?.newsletterAction;
+const placeholder = footer?.newsletterPlaceholder || 'Vložte Váš e-mail';
+---
+<footer
+	class="relative mt-auto bg-cover bg-center"
+	style={footer?.background ? `background-image:url('${footer.background}')` : undefined}
+>
+	<div aria-hidden="true" class="absolute inset-0 bg-surface-dark/50"></div>
+
+	<Container class="relative py-12 text-inverse">
+		<div class="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+			<div>
+				{footer?.intro && (
+					<p data-tina-field={tinaField(footer, 'intro')} class="max-w-2xl">{footer.intro}</p>
+				)}
+
+				{social.length > 0 && (
+					<>
+						{footer?.socialTitle && (
+							<h2
+								data-tina-field={tinaField(footer, 'socialTitle')}
+								class="mt-8 font-display text-xl font-bold uppercase text-inverse"
+							>
+								{footer.socialTitle}
+							</h2>
+						)}
+						<ul class="mt-4 flex items-center gap-3">
+							{social.map((item) => (
+								<li data-tina-field={tinaField(item)}>
+									<a
+										href={item.href ?? '#'}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="flex h-12 w-12 items-center justify-center rounded-[2px] text-inverse transition-[filter] hover:brightness-110"
+										style={`background-color:${item.color || 'var(--color-ink)'}`}
+									>
+										<span class="sr-only">{item.label}</span>
+										<Icon name={item.icon || 'fa6-solid:link'} class="h-5 w-5" />
+									</a>
+								</li>
+							))}
+						</ul>
+					</>
+				)}
+			</div>
+
+			{(footer?.newsletterTitle || footer?.newsletterHref) && (
+				<div>
+					{footer.newsletterTitle && (
+						<h2
+							data-tina-field={tinaField(footer, 'newsletterTitle')}
+							class="font-display text-[26px] font-bold leading-tight text-inverse"
+						>
+							{footer.newsletterTitle}
+						</h2>
+					)}
+					<form
+						method={configured ? 'post' : 'get'}
+						action={footer.newsletterAction || footer.newsletterHref || undefined}
+						class="mt-5 flex flex-col gap-3"
+					>
+						<label class="sr-only" for="newsletter-email">{placeholder}</label>
+						<input
+							id="newsletter-email"
+							type="email"
+							name={configured ? (footer.newsletterField || 'email') : undefined}
+							placeholder={placeholder}
+							required={configured}
+							class="w-full rounded-button border border-black/25 bg-white px-4 py-2.5 text-copy"
+						/>
+						<Button variant="lime" size="sm" class="self-start">
+							{footer.newsletterLabel || 'Odebírejte nyní'}
+						</Button>
+					</form>
+				</div>
+			)}
+		</div>
+
+		{links.length > 0 && (
+			<ul class="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-caption">
+				{links.map((link) => (
+					<li><a href={link.href ?? '#'} class="text-inverse underline underline-offset-2">{link.label}</a></li>
+				))}
+			</ul>
+		)}
+
+		<p class="mt-10 text-center text-inverse">{footer?.copyright}</p>
+	</Container>
+</footer>

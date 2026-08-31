@@ -1,0 +1,433 @@
+---
+/**
+ * Portál debatování — přenesený 1:1 ze starého webu.
+ *
+ * Tahle stránka záměrně stojí mimo zbytek webu: má vlastní `<head>`, vlastní
+ * Tailwind (play CDN, jako dnes), Font Awesome a vlastní JS. Na WordPressu
+ * běžela jako `cleanpage` bez hlavičky a patičky a subdoména
+ * `portal.debatovani.cz` ji zobrazovala ve fullscreen iframu.
+ *
+ * Proto se **nepřevádí na bloky** a nepoužívá layout `Base` — zásah do
+ * rozvržení nebo tříd by ji rozbil. Změny sem patří jen tehdy, když se mění
+ * samotný portál.
+ *
+ * Odchylky od originálu, všechny nutné:
+ *  - obrázky a PDF ukazují na lokální kopie v `/media/portal/`
+ *  - odkazy na vlastní web jsou relativní
+ *  - z odkazů zmizely `_gl` parametry Google Analytics (zbytky cizí relace)
+ *  - seznam aktualit se načítá z `/portal/news.json` místo `wp-json`,
+ *    aby portál přežil vypnutí WordPressu (tvar dat zůstal stejný)
+ *
+ * TODO: play CDN Tailwindu není určené pro produkci. Až se portál bude
+ * upravovat, převést jeho třídy na projektový Tailwind (pozor na rozdíly
+ * v3 → v4, hlavně `rounded` a `shadow`).
+ */
+
+// Stránka nepoužívá `global.css`, takže si písmo musí natáhnout sama.
+// Bez podmnožiny `latin` by Poppins pokryl jen znaky s diakritikou.
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
+import '@fontsource/poppins/700.css';
+---
+<html lang="cs">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Portál debatování – Asociace debatních klubů z.s.</title>
+		<meta
+			name="description"
+			content="Rozcestník pro aktivní debatérky, debatéry a kouče — přihlášky na turnaje, nástroje, metodika a výsledky."
+		/>
+		<link rel="canonical" href="https://debatovani.cz/portal/" />
+		<link rel="icon" href="/media/brand/favicon-32.png" sizes="32x32" />
+		<link rel="icon" href="/media/brand/favicon-192.png" sizes="192x192" />
+		<script is:inline src="https://cdn.tailwindcss.com"></script>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+			integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<style is:global>
+			:root {
+				--orange: #f3dac1;
+				--green: #f1f3be;
+				--blue: #bde3f5;
+			}
+			html {
+				scroll-behavior: smooth;
+			}
+			/*
+			 * Základní barvy a prokládání přebírá portál na produkci ze
+			 * šablony `alone`, kterou tady nemáme. Bez nich text vychází
+			 * čistě černý, a proto působí tučněji než na produkci.
+			 */
+			body {
+				font-family: 'Poppins', system-ui, sans-serif;
+				font-weight: 400;
+				font-size: 16px;
+				line-height: 1.5;
+				color: #333;
+			}
+			h1,
+			h2,
+			h3,
+			h4,
+			h5,
+			h6 {
+				color: #111;
+				line-height: 1.25;
+			}
+			a {
+				color: inherit;
+			}
+		</style>
+	</head>
+	<body class="cleanpage">
+
+
+
+    <button id="scrollTop" title="Zpět nahoru"
+        class="fixed hidden lg:!hidden bottom-6 right-8 bg-[var(--orange)] py-2 px-3 rounded shadow-lg transition-transform hover:-translate-y-1">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <div class="my-10 mx-2 lg:m-10">
+
+        <div class="text-center lg:hidden mb-8">
+            <a href="/" title="Debatování.cz" class="inline-block">
+                <img decoding="async" src="/media/portal/logo.png" width="120px"
+                    class="mx-auto mb-4 transition-all duration-500 hover:rotate-[720deg]">
+            </a>
+            <h1 class="text-3xl">Portál debatování</h1>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-4">
+
+            <div class="lg:mt-[229px] order-1 lg:order-1">
+                <div class="grid grid-cols-2 gap-3 max-w-[400px] mx-auto auto-rows-[1fr]">
+
+                    <a href="/"
+                        class="col-span-2 bg-[var(--orange)] shadow-md hover:shadow-lg rounded-xl p-2 flex flex-col justify-center border border-transparent text-black hover:text-black hover:border-black focus:text-black text-center items-center transition-all duration-300 hover:-translate-y-1 min-h-28">
+                        <div class="m-2 mb-3">
+                            <img decoding="async"
+                                src="/media/portal/loga_ADK_blk.svg" width="30px"
+                                alt="ADK">
+                        </div>
+                        <div class="font-medium">Web ADK</div>
+                    </a>
+
+                    <button command="show-modal" commandfor="debatni-turnaj"
+                        class="bg-[var(--orange)] shadow-md hover:shadow-lg rounded-xl border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 cursor-pointer min-h-28">
+                        <div class="p-2 flex flex-col text-center items-center justify-center h-full">
+                            <div class="m-2 mb-3"><i class="fa-solid fa-trophy fa-2xl"></i></div>
+                            <div class="font-medium">Debatní turnaj</div>
+                        </div>
+                    </button>
+                    <dialog id="debatni-turnaj"
+                        class="p-8 rounded-2xl shadow-2xl relative border border-gray-100 m-auto">
+                        <div class="absolute right-4 top-4">
+                            <button commandfor="debatni-turnaj" command="close"
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-black transition-colors">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 max-w-[500px] mx-auto auto-rows-[1fr] mt-6">
+                            <a href="https://greybox.debatovani.cz/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-file-signature fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Přihlášky na turnaje</div>
+                            </a>
+                            <a href="/debata/zacnete-debatovat/jak-se-pripravit-na-prvni-turnaj/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-suitcase fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Jedu poprvé na turnaj</div>
+                            </a>
+                            <a href="/debata/zacnete-debatovat/cesta-na-debatni-turnaj/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-list-check fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Checklist pro kouče</div>
+                            </a>
+                            <a href="https://padlet.debatovani.cz/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><img decoding="async"
+                                        src="/media/portal/padletlogo-freelogovectors.svg"
+                                        width="30px" alt="Padlet"></div>
+                                <div class="text-sm font-medium">Padlet</div>
+                            </a>
+                            <a href="https://tabbycat.debatovani.cz/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3 flex items-center justify-center">
+                                    <svg width="30" height="30" viewBox="0 0 1920 1920" version="1.1"
+                                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                        xml:space="preserve"
+                                        style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+                                        <g transform="matrix(7.293833,0,0,7.293833,40.819585,29.666008)">
+                                            <path
+                                                d="M118.492,1.47C120.152,1.467 121.858,1.376 123.096,1.377C127.762,1.378 127.728,1.292 132.395,1.293C134.336,1.293 137.112,1.479 138.506,1.478C141.71,1.475 158.186,1.462 177.546,10.392C203.393,22.315 203.358,22.616 223.228,42.768C246.938,66.814 254.657,103.638 254.982,114.429C255.746,139.82 257.5,160.32 235.291,198.383C211.242,239.599 160.854,253.124 153.49,253.856C149.976,254.205 133.748,204.151 140.766,196.729C148.24,188.824 149.548,191.081 160.508,191.03C179.458,190.943 196.991,162.495 197.014,151.497C197.043,137.346 188.576,142.148 180.494,130.505C174.178,121.407 180.167,119.595 175.637,109.444C167.276,90.711 142.196,91.026 137.331,82.602C128.691,67.645 131.072,50.633 130.925,46.392C130.863,44.598 127.596,40.841 111.35,57.35C97.982,70.934 98.196,70.987 88.695,87.62C82.237,98.926 78.181,100.924 71.687,110.615C44.891,150.6 45.111,192.085 45.151,199.506L44.001,200.5L43.959,201.5C43.949,211.641 43.754,211.479 44.767,221.662C43.571,222.918 41.569,224.329 28.033,207.882C14.282,191.174 5.596,165.135 4.197,158.56C1.645,146.569 1.384,139.514 1.039,127C0.981,124.919 1.311,114.962 1.492,112.915C1.639,111.247 1.988,107.124 2.21,106.434C15.92,35.911 70.304,14.067 79.454,10.392C101.579,1.505 115.288,1.477 118.492,1.47Z"
+                                                style="fill-opacity:1;" />
+                                        </g>
+                                    </svg>
+                                </div>
+                                <div class="text-sm font-medium">Tabbycat</div>
+                            </a>
+                            <a href="https://stopky.debatovani.cz/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3 flex items-center justify-center">
+                                    <svg width="30" height="30" viewBox="0 0 512 512" version="1.1"
+                                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                        xml:space="preserve"
+                                        style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+                                        <g transform="matrix(1,0,0,1,43,0)">
+                                            <path
+                                                d="M147.5,0L273.5,0C282.833,6.756 282.232,7.993 282.232,19.5C282.234,54.203 283.93,60.888 272.52,63.591C267.217,64.847 243.906,63.164 242.676,64.648C242.078,65.368 241.804,97.051 242.837,98.186C246.097,101.77 284.874,99.446 337.873,140.016C341.333,142.664 342.078,143.021 345.05,140.05C355.597,129.503 355.467,129.48 365.974,118.974C379.561,105.388 383.614,112.865 402.874,132.126C418.192,147.443 424.271,151.316 410.296,165.296C385.515,190.087 385.149,190.181 385.329,191.531C385.818,195.194 446.12,273.735 402.4,383.459C389.508,415.811 365.461,441.979 361.395,446.404C338.616,471.192 286.086,511.031 217.524,510.971C188.224,510.946 162.868,512.462 112.581,487.338C93.539,477.824 62.89,453.843 46.906,432.196C32.089,412.129 -6.966,359.169 4.749,274.537C16.685,188.314 82.101,117.766 169.448,100.256C173.811,99.382 178.277,99.86 178.289,95.499C178.374,64.523 177.881,64.498 177.598,64.357C173.38,62.267 147.089,68.1 140.943,59.188C138.91,56.239 137.526,54.232 138.318,14.5C138.497,5.545 141.205,3.982 147.5,-0L74.154,401.003C71.807,404.21 74.286,404.178 76.332,407.603C77.591,409.712 81.718,414.196 82.22,414.74C83.043,415.636 82.55,416.047 84.739,418.262C101.07,434.774 101.601,434.175 102.26,434.78C113.111,444.768 118.702,447.05 122.731,450.219C124.68,451.751 142.426,460.911 144.423,461.682C162.747,468.762 167.376,469.614 169.45,469.996C172.003,470.465 171.921,470.679 174.458,470.999C176.032,471.197 175.842,471.755 177.444,471.921C180.188,472.205 185.676,473.117 187.426,473.684C189.456,474.342 189.63,473.131 194.426,474.684C194.764,474.794 222.995,475.751 227.426,474.315C229.453,473.659 229.636,474.867 234.426,473.315C237.338,472.372 237.477,473.271 240.426,472.315C244.046,471.143 264.025,470.001 297.602,450.668C307.448,445 313.088,439.428 314.27,438.26C316.344,436.212 320.066,433.989 320.603,433.668C321.458,433.158 334.182,420.418 334.668,419.603C336.201,417.036 349.067,403.569 347.56,401.46C347.399,401.235 269.641,356.86 268.269,355.781C262.279,351.071 261.84,355.005 256.26,360.22C256.251,360.228 252.016,363.001 245.26,369.22C245.01,369.45 242.984,370.555 242.741,370.781C236.323,376.744 201.865,405.063 201.415,405.352C200.625,405.858 200.031,407.091 199.073,405.828C198.636,405.252 199.71,377.786 198.514,376.486C196.439,374.231 193.005,376.954 180.397,370.703C158.118,359.656 161.236,352.343 156.592,353.762C155.079,354.225 75.396,400.041 74.154,401.003L147.5,-0L123.001,299.458C123.287,294.88 123.608,294.979 124.079,290.444C124.351,287.814 130.134,270.097 132.781,266.731C132.958,266.505 139.436,256.115 139.78,255.74C143.793,251.381 143.431,251.115 143.78,250.74C171.792,220.764 196.789,224.299 198.01,219.448C198.524,217.407 198.011,150.484 197.965,144.488C197.961,144.012 197.934,140.532 192.426,142.316C189.721,143.191 189.689,142.858 185.444,143.079C184.894,143.108 182.936,143.941 182.458,144.001C181.812,144.083 175.954,144.821 174.426,145.316C173.954,145.469 170.214,146.68 168.45,147.004C148.66,150.646 93.364,173.59 65.669,225.603C56.485,242.85 56.501,242.827 50.314,261.424C48.647,266.436 49.317,266.558 47.685,271.574C46.88,274.046 47.479,274.12 46.685,276.574C45.729,279.523 46.628,279.662 45.685,282.574C44.133,287.364 45.341,287.547 44.685,289.574C43.28,293.909 44.176,325.143 44.316,325.574C45.406,328.942 45.115,339.713 51.686,359.424C56.393,373.545 58.299,380.366 62.27,377.219C63.514,376.234 87.218,362.586 89.397,361.331C102.926,353.542 103.204,354.056 104.269,353.219C107.066,351.019 122.765,342.244 124.397,341.331C127.508,339.593 127.444,338.965 126.314,335.576C123.425,326.91 120.111,307.758 123.001,299.458L147.5,-0L302.219,168.998C302.102,168.932 300.756,168.17 300.756,168.17C296.3,164.829 291.413,162.652 290.755,162.167C282.076,155.769 247.232,143.493 231.475,142.918C229.085,142.831 223.847,140.046 223.966,144.505C224.045,147.451 224.035,147.374 224.035,193.5C224.035,220.14 223.481,221.571 226.553,222.024C254.893,226.205 299.414,255.205 298.923,311.509C298.901,314.084 297.985,313.896 297.968,316.504C297.843,335.225 291.004,338.255 294.59,340.382C307.989,348.331 308.156,348.026 309.241,348.835C311.953,350.855 329.587,360.709 331.376,361.708C345.495,369.598 345.233,369.944 359.371,377.759C362.725,379.613 362.123,377.061 363.759,373.627C368.278,364.141 370.224,355.198 371.728,350.587C373.599,344.852 372.933,344.767 373.361,343.446C374.702,339.307 375.268,332.731 375.359,332.446C376.751,328.114 375.379,327.894 376.726,323.578C377.164,322.176 377.491,291.513 375.724,285.421C374.716,281.948 375.731,281.833 374.72,278.421C373.366,273.85 373.824,273.813 373.703,273.423C369.711,260.567 364.092,225.289 325.262,186.738C321.178,182.684 320.439,183.624 316.329,179.687C309.95,173.577 306.729,172.461 302.219,168.998L147.5,-0L147.96,327.144C148.914,327.204 148.968,327.447 149.675,326.843C150.64,326.019 156.769,322.674 157.397,322.331C158.839,321.545 173.773,313.395 175.269,312.219C179.266,309.075 197.363,300.926 198.002,297.457C198.301,295.831 197.994,251.484 197.966,247.487C197.938,243.457 195.018,245.715 193.45,246.004C186.275,247.328 176.939,252.875 175.603,253.669C169.922,257.044 169.559,258.097 168.603,258.668C162.622,262.24 158.677,269.417 157.219,271.269C146.131,285.358 143.073,309.364 145.685,317.426C146.339,319.446 145.352,319.867 147.96,327.144L147.5,0Z"
+                                                style="fill-opacity:1;" />
+                                        </g>
+                                    </svg>
+                                </div>
+                                <div class="text-sm font-medium">Debatní stopky</div>
+                            </a>
+                            <a href="https://statistiky.debatovani.cz/"
+                                class="col-span-2 bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-chart-bar fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Výsledky a statistiky</div>
+                            </a>
+                        </div>
+                    </dialog>
+
+                    <button command="show-modal" commandfor="schuzka-klubu"
+                        class="bg-[var(--orange)] shadow-md hover:shadow-lg rounded-xl border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 cursor-pointer min-h-28">
+                        <div class="p-2 flex flex-col text-center items-center justify-center h-full">
+                            <div class="m-2 mb-3"><i class="fa-solid fa-users fa-2xl"></i></div>
+                            <div class="font-medium">Schůzka debatního klubu</div>
+                        </div>
+                    </button>
+                    <dialog id="schuzka-klubu"
+                        class="p-8 rounded-2xl shadow-2xl relative border border-gray-100 m-auto">
+                        <div class="absolute right-4 top-4">
+                            <button commandfor="schuzka-klubu" command="close"
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-black transition-colors">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 max-w-[500px] mx-auto auto-rows-[1fr] mt-6">
+                            <a href="/media/portal/jak-koucovat-debatni-klub.pdf"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-chalkboard-user fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Jak koučovat debatní klub</div>
+                            </a>
+                            <a href="https://drive.google.com/drive/folders/13VYMMvmvKF50Zf_uX0aUAaaTgYvntBDn?usp=sharing"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-brands fa-google-drive fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Disk pro kouče</div>
+                            </a>
+                            <a href="https://resourcebase.idebate.net/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-database fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Resourcebase</div>
+                            </a>
+                            <a href="https://stopky.debatovani.cz/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3 flex items-center justify-center">
+                                    <svg width="30" height="30" viewBox="0 0 512 512" version="1.1"
+                                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                        xml:space="preserve"
+                                        style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+                                        <g transform="matrix(1,0,0,1,43,0)">
+                                            <path
+                                                d="M147.5,0L273.5,0C282.833,6.756 282.232,7.993 282.232,19.5C282.234,54.203 283.93,60.888 272.52,63.591C267.217,64.847 243.906,63.164 242.676,64.648C242.078,65.368 241.804,97.051 242.837,98.186C246.097,101.77 284.874,99.446 337.873,140.016C341.333,142.664 342.078,143.021 345.05,140.05C355.597,129.503 355.467,129.48 365.974,118.974C379.561,105.388 383.614,112.865 402.874,132.126C418.192,147.443 424.271,151.316 410.296,165.296C385.515,190.087 385.149,190.181 385.329,191.531C385.818,195.194 446.12,273.735 402.4,383.459C389.508,415.811 365.461,441.979 361.395,446.404C338.616,471.192 286.086,511.031 217.524,510.971C188.224,510.946 162.868,512.462 112.581,487.338C93.539,477.824 62.89,453.843 46.906,432.196C32.089,412.129 -6.966,359.169 4.749,274.537C16.685,188.314 82.101,117.766 169.448,100.256C173.811,99.382 178.277,99.86 178.289,95.499C178.374,64.523 177.881,64.498 177.598,64.357C173.38,62.267 147.089,68.1 140.943,59.188C138.91,56.239 137.526,54.232 138.318,14.5C138.497,5.545 141.205,3.982 147.5,-0L74.154,401.003C71.807,404.21 74.286,404.178 76.332,407.603C77.591,409.712 81.718,414.196 82.22,414.74C83.043,415.636 82.55,416.047 84.739,418.262C101.07,434.774 101.601,434.175 102.26,434.78C113.111,444.768 118.702,447.05 122.731,450.219C124.68,451.751 142.426,460.911 144.423,461.682C162.747,468.762 167.376,469.614 169.45,469.996C172.003,470.465 171.921,470.679 174.458,470.999C176.032,471.197 175.842,471.755 177.444,471.921C180.188,472.205 185.676,473.117 187.426,473.684C189.456,474.342 189.63,473.131 194.426,474.684C194.764,474.794 222.995,475.751 227.426,474.315C229.453,473.659 229.636,474.867 234.426,473.315C237.338,472.372 237.477,473.271 240.426,472.315C244.046,471.143 264.025,470.001 297.602,450.668C307.448,445 313.088,439.428 314.27,438.26C316.344,436.212 320.066,433.989 320.603,433.668C321.458,433.158 334.182,420.418 334.668,419.603C336.201,417.036 349.067,403.569 347.56,401.46C347.399,401.235 269.641,356.86 268.269,355.781C262.279,351.071 261.84,355.005 256.26,360.22C256.251,360.228 252.016,363.001 245.26,369.22C245.01,369.45 242.984,370.555 242.741,370.781C236.323,376.744 201.865,405.063 201.415,405.352C200.625,405.858 200.031,407.091 199.073,405.828C198.636,405.252 199.71,377.786 198.514,376.486C196.439,374.231 193.005,376.954 180.397,370.703C158.118,359.656 161.236,352.343 156.592,353.762C155.079,354.225 75.396,400.041 74.154,401.003L147.5,-0L123.001,299.458C123.287,294.88 123.608,294.979 124.079,290.444C124.351,287.814 130.134,270.097 132.781,266.731C132.958,266.505 139.436,256.115 139.78,255.74C143.793,251.381 143.431,251.115 143.78,250.74C171.792,220.764 196.789,224.299 198.01,219.448C198.524,217.407 198.011,150.484 197.965,144.488C197.961,144.012 197.934,140.532 192.426,142.316C189.721,143.191 189.689,142.858 185.444,143.079C184.894,143.108 182.936,143.941 182.458,144.001C181.812,144.083 175.954,144.821 174.426,145.316C173.954,145.469 170.214,146.68 168.45,147.004C148.66,150.646 93.364,173.59 65.669,225.603C56.485,242.85 56.501,242.827 50.314,261.424C48.647,266.436 49.317,266.558 47.685,271.574C46.88,274.046 47.479,274.12 46.685,276.574C45.729,279.523 46.628,279.662 45.685,282.574C44.133,287.364 45.341,287.547 44.685,289.574C43.28,293.909 44.176,325.143 44.316,325.574C45.406,328.942 45.115,339.713 51.686,359.424C56.393,373.545 58.299,380.366 62.27,377.219C63.514,376.234 87.218,362.586 89.397,361.331C102.926,353.542 103.204,354.056 104.269,353.219C107.066,351.019 122.765,342.244 124.397,341.331C127.508,339.593 127.444,338.965 126.314,335.576C123.425,326.91 120.111,307.758 123.001,299.458L147.5,-0L302.219,168.998C302.102,168.932 300.756,168.17 300.756,168.17C296.3,164.829 291.413,162.652 290.755,162.167C282.076,155.769 247.232,143.493 231.475,142.918C229.085,142.831 223.847,140.046 223.966,144.505C224.045,147.451 224.035,147.374 224.035,193.5C224.035,220.14 223.481,221.571 226.553,222.024C254.893,226.205 299.414,255.205 298.923,311.509C298.901,314.084 297.985,313.896 297.968,316.504C297.843,335.225 291.004,338.255 294.59,340.382C307.989,348.331 308.156,348.026 309.241,348.835C311.953,350.855 329.587,360.709 331.376,361.708C345.495,369.598 345.233,369.944 359.371,377.759C362.725,379.613 362.123,377.061 363.759,373.627C368.278,364.141 370.224,355.198 371.728,350.587C373.599,344.852 372.933,344.767 373.361,343.446C374.702,339.307 375.268,332.731 375.359,332.446C376.751,328.114 375.379,327.894 376.726,323.578C377.164,322.176 377.491,291.513 375.724,285.421C374.716,281.948 375.731,281.833 374.72,278.421C373.366,273.85 373.824,273.813 373.703,273.423C369.711,260.567 364.092,225.289 325.262,186.738C321.178,182.684 320.439,183.624 316.329,179.687C309.95,173.577 306.729,172.461 302.219,168.998L147.5,-0L147.96,327.144C148.914,327.204 148.968,327.447 149.675,326.843C150.64,326.019 156.769,322.674 157.397,322.331C158.839,321.545 173.773,313.395 175.269,312.219C179.266,309.075 197.363,300.926 198.002,297.457C198.301,295.831 197.994,251.484 197.966,247.487C197.938,243.457 195.018,245.715 193.45,246.004C186.275,247.328 176.939,252.875 175.603,253.669C169.922,257.044 169.559,258.097 168.603,258.668C162.622,262.24 158.677,269.417 157.219,271.269C146.131,285.358 143.073,309.364 145.685,317.426C146.339,319.446 145.352,319.867 147.96,327.144L147.5,0Z"
+                                                style="fill-opacity:1;" />
+                                        </g>
+                                    </svg>
+                                </div>
+                                <div class="text-sm font-medium">Debatní stopky</div>
+                            </a>
+                            <a href="https://statistiky.debatovani.cz/"
+                                class="col-span-2 bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-pen-to-square fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Zapsat debatu</div>
+                            </a>
+                        </div>
+                    </dialog>
+
+                    <a href="/projekty/mezinarodni-reprezentace/"
+                        class="bg-[var(--orange)] shadow-md hover:shadow-lg rounded-xl p-2 flex flex-col text-center items-center justify-center border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 min-h-28">
+                        <div class="m-2 mb-3"><i class="fa-solid fa-earth-americas fa-2xl"></i></div>
+                        <div class="font-medium">Mezinárodní reprezentace</div>
+                    </a>
+
+                    <a href="/debata/debatni-liga/online-debatni-klub/"
+                        class="bg-[var(--orange)] shadow-md hover:shadow-lg rounded-xl p-2 flex flex-col text-center items-center justify-center border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 min-h-28">
+                        <div class="m-2 mb-3"><i class="fa-solid fa-desktop fa-2xl"></i></div>
+                        <div class="font-medium">Online debatní klub</div>
+                    </a>
+
+                    <a href="/fotogalerie/"
+                        class="col-span-2 bg-[var(--orange)] shadow-md hover:shadow-lg rounded-xl p-2 flex flex-col text-center items-center justify-center border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 min-h-28">
+                        <div class="m-2 mb-3">
+                            <img decoding="async"
+                                src="/media/portal/Google_Photos_icon.svg"
+                                alt="Google Photos logo" width="30px">
+                        </div>
+                        <div class="font-medium">Fotogalerie</div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="order-3 lg:order-2 max-w-[400px] mx-auto mt-12 lg:mt-0">
+
+                <div class="text-center hidden lg:block">
+                    <a href="/" title="Debatování.cz">
+                        <img decoding="async" src="/media/portal/logo.png"
+                            width="120px" class="mx-auto mb-4 transition-all duration-500 hover:rotate-[720deg]">
+                    </a>
+                    <h1 class="text-3xl">Portál debatování</h1>
+                </div>
+
+                <div class="my-4">
+                    <i class="fa-regular fa-message"></i>
+                    Aktuality
+                </div>
+
+                <div class="">
+                    <div id="news" class="grid gap-3">
+                        <div role="status" id="loading" class="flex justify-center my-6">
+                            <svg aria-hidden="true"
+                                class="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-[var(--blue)]"
+                                viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                    fill="currentColor" />
+                                <path
+                                    d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                    fill="currentFill" />
+                            </svg>
+                            <span class="sr-only">Loading…</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mx-2 mt-8">
+                        <a href="https://calendar.google.com/calendar/embed?src=info%40debatovani.cz&ctz=Europe%2FPrague"
+                            class="rounded-xl p-3 bg-[var(--orange)] shadow-md grid grid-cols-[30px_1fr] border border-transparent items-center text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                            <div class="grid content-center text-center"><i class="fa-solid fa-calendar-days"></i></div>
+                            <span class="font-medium">
+                                Kalendář
+                            </span>
+                        </a>
+                        <a href="/aktuality/"
+                            class="rounded-xl p-3 bg-[var(--blue)] shadow-md grid grid-cols-[30px_1fr] border border-transparent items-center text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                            <div class="grid content-center text-center"><i class="fa-regular fa-message"></i></div>
+                            <span class="font-medium">
+                                Všechny aktuality
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-2 lg:order-3 lg:mt-[229px]">
+                <div class="grid grid-cols-2 gap-3 max-w-[400px] mx-auto auto-rows-[1fr]">
+
+                    <button command="show-modal" commandfor="debaterstvo"
+                        class="bg-[var(--orange)] shadow-md hover:shadow-lg rounded-xl border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 cursor-pointer min-h-28">
+                        <div class="p-2 flex flex-col text-center items-center justify-center h-full">
+                            <div class="m-2 mb-3"><i class="fa-solid fa-comments fa-2xl"></i></div>
+                            <div class="font-medium">Debatérstvo</div>
+                        </div>
+                    </button>
+                    <dialog id="debaterstvo" class="p-8 rounded-2xl shadow-2xl relative border border-gray-100 m-auto">
+                        <div class="absolute right-4 top-4">
+                            <button commandfor="debaterstvo" command="close"
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-black transition-colors">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 max-w-[500px] mx-auto auto-rows-[1fr] mt-6">
+                            <a href="/dokumenty/metodika/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-book fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Metodické materiály</div>
+                            </a>
+                            <a href="/dokumenty/soutezni-dokumenty/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-scale-balanced fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Pravidla</div>
+                            </a>
+                            <a href="/faq/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-circle-question fa-2xl"></i></div>
+                                <div class="text-sm font-medium">Často kladené otázky</div>
+                            </a>
+                            <a href="https://elearning.debatovani.cz/"
+                                class="bg-[var(--orange)] text-black hover:text-black shadow-sm hover:shadow-md rounded-xl p-3 flex flex-col items-center text-center justify-center border border-transparent hover:border-black transition-all duration-200 hover:-translate-y-1">
+                                <div class="m-2 mb-3"><i class="fa-solid fa-graduation-cap fa-2xl"></i></div>
+                                <div class="text-sm font-medium">E-learning</div>
+                            </a>
+                        </div>
+                    </dialog>
+
+                    <a href="/rozhodci/"
+                        class="bg-[var(--orange)] shadow-md hover:shadow-lg rounded-xl p-2 flex flex-col text-center items-center justify-center border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 min-h-28">
+                        <div class="m-2 mb-3"><i class="fa-solid fa-gavel fa-2xl"></i></div>
+                        <div class="font-medium">Rozhodčí</div>
+                    </a>
+                </div>
+
+                <div
+                    class="hidden lg:block bg-white rounded-xl shadow-lg my-8 mx-1 p-8 max-w-[400px] mx-auto text-center border border-gray-100">
+                    <p class="mb-6 font-medium text-gray-800 leading-relaxed">
+                        Máte dotaz a nenašli jste odpověď v <a href="/faq/"
+                            class="text-[#059fff] hover:underline font-semibold">často kladených otázkách</a>?
+                        Neváhejte se nám ozvat!
+                    </p>
+                    <a href="/kontakt/"
+                        class="inline-block rounded-lg bg-[var(--blue)] text-black py-3 px-6 shadow border border-transparent hover:border-black hover:text-black focus:text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                        <i class="fa-solid fa-envelope mr-2"></i> Kontaktujte nás
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-4 gap-3 max-w-[400px] mx-auto mt-12">
+                    <a href="https://www.instagram.com/debatovani.cz/" target="_blank"
+                        class="bg-[var(--green)] shadow-md hover:shadow-lg rounded-xl flex items-center justify-center border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 aspect-square"
+                        rel="noopener" title="Instagram">
+                        <i class="fa-brands fa-instagram fa-xl"></i>
+                    </a>
+                    <a href="https://www.facebook.com/debatovani.cz" target="_blank"
+                        class="bg-[var(--green)] shadow-md hover:shadow-lg rounded-xl flex items-center justify-center border border-transparent text-black hover:text-black hover:border-black transition-all duration-300 hover:-translate-y-1 aspect-square"
+                        rel="noopener" title="Facebook">
+                        <i class="fa-brands fa-facebook fa-xl"></i>
+                    </a>
+                    <a href="https://www.youtube.com/@DebatovaniCZ" target="_blank"
+                        class="bg-[var(--green)] shadow-md hover:shadow-lg rounded-xl flex items-center justify-center border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 aspect-square"
+                        rel="noopener" title="YouTube">
+                        <i class="fa-brands fa-youtube fa-xl"></i>
+                    </a>
+                    <a href="https://discord.gg/eah3eXnNJS" target="_blank"
+                        class="bg-[var(--green)] shadow-md hover:shadow-lg rounded-xl flex items-center justify-center border border-transparent text-black hover:text-black hover:border-black focus:text-black transition-all duration-300 hover:-translate-y-1 aspect-square"
+                        rel="noopener" title="Discord">
+                        <i class="fa-brands fa-discord fa-xl"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="text-gray-500 mt-16 mb-4 mx-auto text-center text-sm font-medium">
+            © Asociace debatních klubů z.s., 2025
+        </div>
+    </div>
+
+
+
+
+<p class="wp-block-paragraph"></p>
+<!-- Úryvek kódu Google Tag Manager (noscript) přidaný aplikací Site Kit -->
+		<noscript>
+			<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TV358PC" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+		</noscript>
+		<!-- Ukončit úryvek kódu Google Tag Manager (noscript) přidaný aplikací Site Kit -->
+			<script src="../../scripts/portal.js"></script>
+	</body>
+</html>

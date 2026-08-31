@@ -1,0 +1,12 @@
+---
+interface Props {
+	date?: string | null;
+	class?: string;
+}
+
+const { date, class: className } = Astro.props;
+const parsed = date ? new Date(date) : null;
+const valid = parsed && !Number.isNaN(parsed.valueOf());
+const formatter = new Intl.DateTimeFormat('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
+---
+{valid && <time datetime={parsed.toISOString()} class={className}>{formatter.format(parsed)}</time>}

@@ -1,0 +1,102 @@
+---
+/**
+ * Formulář. Nahrazuje WPForms shortcode (4 formuláře na 8 stránkách).
+ *
+ * Rozvržení odpovídá dnešnímu webu: nadpis a text v levém sloupci, pole
+ * v pravém, obojí přímo na pozadí sekce — žádná bílá karta. Popisky proto
+ * dědí barvu textu sekce (na fotce jsou bílé), samotná pole zůstávají bílá.
+ *
+ * Odesílací endpoint je pole ve schématu — dokud není vyplněný, formulář se
+ * zobrazí, ale odeslání je vypnuté, aby data nemizela do prázdna.
+ */
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import Button from '../ui/Button.astro';
+import { langFromPath, t } from '../../lib/i18n';
+import type { ContactFormBlock } from '../../lib/data';
+
+interface Props { data: ContactFormBlock }
+
+const { data } = Astro.props;
+const strings = t(langFromPath(Astro.url.pathname));
+const fields = (data.fields ?? []).filter((f) => f !== null);
+
+/** Typ pole chodí z CMS jako řetězec; `<input>` chce užší množinu hodnot. */
+type InputType = astroHTML.JSX.InputHTMLAttributes['type'];
+
+const inputClass =
+	'w-full rounded-button border border-black/25 bg-white px-4 py-2.5 text-copy';
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	<div class="grid grid-cols-1 gap-10 md:grid-cols-2 md:items-start">
+		<div>
+			{data.title && (
+				<div data-tina-field={tinaField(data, 'title')}>
+					<Heading
+						level={2}
+						size={(data.titleSize as never) ?? 'lead'}
+						tone={(data.titleTone as never) ?? 'inverse'}
+						align={(data.titleAlign as never) ?? 'left'}
+					>
+						{data.title}
+					</Heading>
+				</div>
+			)}
+			{data.intro && (
+				<p data-tina-field={tinaField(data, 'intro')} class="mt-6 whitespace-pre-line">{data.intro}</p>
+			)}
+		</div>
+
+		<form method="post" action={data.action ?? undefined} class="space-y-4">
+			{fields.map((field) => {
+				const id = `f-${field.name ?? ''}`;
+				const options = (field.options ?? []).filter((o): o is string => !!o);
+				return (
+					<div data-tina-field={tinaField(field)}>
+						<label for={id} class="mb-1.5 block font-bold">
+							{field.label}
+							{field.required && <span aria-hidden="true" class="ms-0.5">*</span>}
+						</label>
+						{field.type === 'textarea' ? (
+							<textarea id={id} name={field.name ?? ''} rows="5" required={!!field.required} class={inputClass}></textarea>
+						) : field.type === 'select' ? (
+							<select id={id} name={field.name ?? ''} required={!!field.required} class={inputClass}>
+								{options.map((option) => <option value={option}>{option}</option>)}
+							</select>
+						) : (
+							<input
+								id={id}
+								name={field.name ?? ''}
+								type={(field.type ?? 'text') as InputType}
+								required={!!field.required}
+								class={inputClass}
+							/>
+						)}
+					</div>
+				);
+			})}
+
+			{data.action ? (
+				<Button variant="lime">{data.submitLabel || strings.submit}</Button>
+			) : (
+				<p class="rounded-button bg-white/90 p-3 text-caption text-copy">{strings.formDisabled}</p>
+			)}
+
+			{data.note && <p class="text-caption">{data.note}</p>}
+		</form>
+	</div>
+</Section>

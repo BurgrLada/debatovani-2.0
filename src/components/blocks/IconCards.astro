@@ -1,0 +1,117 @@
+---
+/**
+ * Mřížka karet s ikonou.
+ *
+ * Karty jsou **text, ne odkaz** — vzhled odkazu (podtržení, zvednutí při
+ * najetí) se proto uplatní jen tehdy, když karta odkaz opravdu má.
+ *
+ * Layout je flex, ne grid: v posledním neúplném řádku pak zbylé karty sedí
+ * na střed místo u levého okraje. Dnešní web má sedm karet ve třech
+ * sloupcích, takže poslední stojí sama.
+ */
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import { tinaField } from '@tinacms/astro/tina-field';
+import TinaMarkdown from '@tinacms/astro/TinaMarkdown.astro';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import { mdxComponents } from '../mdx/components';
+import type { IconCardsBlock } from '../../lib/data';
+
+interface Props { data: IconCardsBlock }
+
+const { data } = Astro.props;
+const items = (data.items ?? []).filter((i) => i !== null);
+
+const columns: Record<string, string> = {
+	'2': 'sm:w-1/2',
+	'3': 'sm:w-1/2 lg:w-1/3',
+	'4': 'sm:w-1/2 lg:w-1/4',
+};
+const column = columns[data.columns ?? '3'] ?? columns['3'];
+
+/*
+ * Ikona sedí v kolečku, které cykluje přes tři barvy značky. Dnešní web má
+ * na tomhle místě plné černé piktogramy v různých mřížkách a tloušťkách —
+ * jednotná linková sada v barevných terčích je čitelnější a zároveň konečně
+ * používá paletu značky.
+ */
+const badges = [
+	'bg-lime-wash text-ink',
+	'bg-[color-mix(in_srgb,var(--color-blue)_14%,white)] text-ink',
+	'bg-[color-mix(in_srgb,var(--color-orange)_14%,white)] text-ink',
+];
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.title && (
+		<div data-tina-field={tinaField(data, 'title')}>
+			<Heading
+				level={2}
+				size={(data.titleSize as never) ?? 'section'}
+				tone={(data.titleTone as never) ?? 'heading'}
+				align={(data.titleAlign as never) ?? 'center'}
+			>
+				{data.title}
+			</Heading>
+		</div>
+	)}
+	{data.intro && (
+		<p data-tina-field={tinaField(data, 'intro')} class="mx-auto mt-4 max-w-3xl text-center">
+			{data.intro}
+		</p>
+	)}
+
+	<ul class="mt-12 flex flex-wrap justify-center gap-y-14">
+		{items.map((item, index) => {
+			const Wrapper = item.href ? 'a' : 'div';
+			return (
+				<li class={`w-full px-4 ${column}`}>
+					<Wrapper
+						href={item.href ?? undefined}
+						data-tina-field={tinaField(item)}
+						class={`group block text-center text-copy ${item.href ? 'cursor-pointer' : ''}`}
+					>
+						<div class="flex justify-center">
+							{item.image ? (
+								<Image src={item.image} alt="" width={200} height={200} format="webp" class="h-24 w-auto object-contain" />
+							) : item.icon ? (
+								<span
+									aria-hidden="true"
+									class={`flex h-24 w-24 items-center justify-center rounded-full ${badges[index % badges.length]} ${item.href ? 'transition-transform duration-200 group-hover:-translate-y-1' : ''}`}
+								>
+									<Icon name={item.icon} class="h-11 w-11" />
+								</span>
+							) : null}
+						</div>
+						{item.title && (
+							<h3
+								data-tina-field={tinaField(item, 'title')}
+								class={`mt-5 font-body text-[30px] font-semibold leading-tight text-subheading ${item.href ? 'group-hover:underline' : ''}`}
+							>
+								{item.title}
+							</h3>
+						)}
+						{item.text && (
+							<div data-tina-field={tinaField(item, 'text')} class="prose-adk mt-4 text-left">
+								<TinaMarkdown content={item.text} components={mdxComponents} />
+							</div>
+						)}
+					</Wrapper>
+				</li>
+			);
+		})}
+	</ul>
+</Section>

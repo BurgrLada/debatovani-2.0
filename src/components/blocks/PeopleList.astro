@@ -1,0 +1,90 @@
+---
+/**
+ * Výpis lidí z kolekce `person`.
+ *
+ * Dvě podoby, obě jsou na dnešním webu:
+ *  - `compact` — čtvercová fotka a pod ní jméno limetkově; když má člověk
+ *    funkci, je součástí téhož řádku („Předsedkyně – Barbora Lacinová“)
+ *  - `detailed` — nad fotkou modrý nadpis s funkcí, pod fotkou jméno
+ *    a medailonek
+ *
+ * Fotky jsou čtvercové bez zaoblení, jak je má produkce.
+ */
+import { Image } from 'astro:assets';
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import { listPeople } from '../../lib/data';
+import { langFromPath } from '../../lib/i18n';
+import type { PeopleListBlock } from '../../lib/data';
+
+interface Props { data: PeopleListBlock }
+
+const { data } = Astro.props;
+const all = await listPeople(langFromPath(Astro.url.pathname));
+const people = data.group ? all.filter((person) => person.group === data.group) : all;
+const detailed = data.variant === 'detailed';
+
+const columns: Record<string, string> = {
+	'2': 'sm:grid-cols-2',
+	'3': 'sm:grid-cols-2 lg:grid-cols-3',
+	'4': 'sm:grid-cols-2 lg:grid-cols-4',
+};
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	parallax={data.parallax}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.title && (
+		<div data-tina-field={tinaField(data, 'title')}>
+			<Heading
+				level={2}
+				size={(data.titleSize as never) ?? 'h2'}
+				tone={(data.titleTone as never) ?? 'heading'}
+				align={(data.titleAlign as never) ?? 'center'}
+				class="mb-10"
+			>
+				{data.title}
+			</Heading>
+		</div>
+	)}
+
+	<ul class={`grid grid-cols-1 gap-x-8 gap-y-12 ${columns[data.columns ?? '4'] ?? columns['4']}`}>
+		{people.map((person) => (
+			<li class="text-center">
+				{detailed && person.role && (
+					<h3 class="mb-5 font-display text-h3 font-bold text-subheading">{person.role}</h3>
+				)}
+				{person.photo && (
+					<Image
+						src={person.photo}
+						alt={person.name ?? ''}
+						width={550}
+						height={550}
+						format="webp"
+						class="mx-auto aspect-square w-full max-w-[275px] object-cover"
+					/>
+				)}
+				<h4 class="mt-4 font-display text-h4 font-bold text-lime-muted">
+					{!detailed && person.role ? `${person.role} – ${person.name}` : person.name}
+				</h4>
+				{person.email && (
+					<a href={`mailto:${person.email}`} class="mt-1 inline-block text-caption underline underline-offset-2">
+						{person.email}
+					</a>
+				)}
+				{detailed && person.bio && <p class="mt-4 text-left">{person.bio}</p>}
+			</li>
+		))}
+	</ul>
+</Section>

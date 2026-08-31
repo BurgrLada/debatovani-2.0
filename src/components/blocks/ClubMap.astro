@@ -1,0 +1,188 @@
+---
+/**
+ * Mapa debatních klubů.
+ *
+ * Dnešní web má na tomhle místě obrázek s body namalovanými napevno
+ * (Elementor widget `hotspot`), takže přidat klub znamenalo překreslit
+ * obrázek. Tady jsou body **data**: bere se každý aktivní klub z kolekce
+ * `club`, který má vyplněnou zeměpisnou šířku a délku, a jeho poloha se
+ * spočítá vůči zeměpisným okrajům podkladového obrázku.
+ *
+ * Blok umí i vloženou Google My Maps — zůstává jako záložní cesta pro
+ * stránku `/kontakt/mapa-debatnich-klubu/`, dokud nebudou kluby vyplněné.
+ */
+import { Image } from 'astro:assets';
+import { tinaField } from '@tinacms/astro/tina-field';
+import TinaMarkdown from '@tinacms/astro/TinaMarkdown.astro';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import Button from '../ui/Button.astro';
+import { mdxComponents } from '../mdx/components';
+import { cn } from '../../lib/cn';
+import { listClubs } from '../../lib/data';
+import { langFromPath } from '../../lib/i18n';
+import type { ClubMapBlock } from '../../lib/data';
+
+interface Props { data: ClubMapBlock }
+
+const { data } = Astro.props;
+const lang = langFromPath(Astro.url.pathname);
+const clubs = await listClubs(lang);
+const buttons = (data.buttons ?? []).filter((b) => b !== null);
+
+/**
+ * Okraje podkladového obrázku. Výchozí hodnoty jsou změřené z dodané mapy ČR
+ * (`/media/home/mapa.webp`): kresba v ní zabírá 1,8–94,7 % šířky a
+ * 8,1–91,8 % výšky, takže okraje celého obrázku vycházejí takto.
+ */
+const bounds = {
+	west: data.bounds?.west ?? 11.96,
+	east: data.bounds?.east ?? 19.25,
+	south: data.bounds?.south ?? 48.3,
+	north: data.bounds?.north ?? 51.3,
+};
+
+/** Lineární projekce na obrázek — pro mapu jednoho státu je dost přesná. */
+const markers = (data.showMarkers === false ? [] : clubs)
+	.filter((club) => typeof club.lat === 'number' && typeof club.lng === 'number')
+	.map((club) => ({
+		club,
+		x: ((club.lng! - bounds.west) / (bounds.east - bounds.west)) * 100,
+		y: ((bounds.north - club.lat!) / (bounds.north - bounds.south)) * 100,
+	}))
+	.filter((m) => m.x >= 0 && m.x <= 100 && m.y >= 0 && m.y <= 100);
+
+const kinds: Record<string, string> = {
+	ss: 'bg-orange',
+	zs: 'bg-blue',
+	online: 'bg-lime',
+};
+
+const fullWidth = data.imagePosition === 'full' || !data.title;
+const imageFirst = data.imagePosition === 'left';
+const ratios: Record<string, [string, string]> = {
+	half: ['md:w-1/2', 'md:w-1/2'],
+	'two-thirds': ['md:w-2/5', 'md:w-3/5'],
+};
+const [textWidth, mapWidth] = ratios[data.imageWidth ?? 'two-thirds'] ?? ratios['two-thirds'];
+
+const byRegion = new Map<string, typeof clubs>();
+for (const club of clubs) {
+	const region = club.region ?? 'Ostatní';
+	byRegion.set(region, [...(byRegion.get(region) ?? []), club]);
+}
+const regions = [...byRegion.entries()].sort(([a], [b]) => a.localeCompare(b, 'cs'));
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	<div class={cn('flex flex-col gap-8', !fullWidth && 'md:flex-row md:items-center', imageFirst && 'md:flex-row-reverse')}>
+		{!fullWidth && (
+			<div class={cn('w-full', textWidth)}>
+				{data.title && (
+					<div data-tina-field={tinaField(data, 'title')}>
+						<Heading
+							level={2}
+							size={(data.titleSize as never) ?? 'panel'}
+							tone={(data.titleTone as never) ?? 'lime'}
+							align={(data.titleAlign as never) ?? 'left'}
+							class="mb-4"
+						>
+							{data.title}
+						</Heading>
+					</div>
+				)}
+				<div data-tina-field={tinaField(data, 'body')} class="prose-adk">
+					<TinaMarkdown content={data.body} components={mdxComponents} />
+				</div>
+				{buttons.length > 0 && (
+					<div class="mt-8 flex flex-wrap gap-4">
+						{buttons.map((button) => (
+							<div data-tina-field={tinaField(button)}>
+								<Button href={button.href} variant={button.variant as never}>{button.label}</Button>
+							</div>
+						))}
+					</div>
+				)}
+			</div>
+		)}
+
+		<div class={cn('w-full', !fullWidth && mapWidth)}>
+			{data.embedUrl ? (
+				<div class="overflow-hidden rounded-card">
+					<iframe
+						src={data.embedUrl}
+						title="Mapa debatních klubů"
+						loading="lazy"
+						referrerpolicy="no-referrer-when-downgrade"
+						class="h-[480px] w-full border-0"
+					></iframe>
+				</div>
+			) : data.image ? (
+				<div class="relative" data-tina-field={tinaField(data, 'image')}>
+					<Image
+						src={data.image}
+						alt={markers.length > 0 ? 'Mapa České republiky' : 'Mapa debatních klubů'}
+						width={1682}
+						height={1084}
+						format="webp"
+						class="h-auto w-full"
+					/>
+					{markers.map(({ club, x, y }) => (
+						<div
+							class="absolute -translate-x-1/2 -translate-y-full"
+							style={`left:${x.toFixed(2)}%;top:${y.toFixed(2)}%`}
+						>
+							<span class="group relative flex flex-col items-center">
+								<span class="sr-only">{club.name}{club.city ? `, ${club.city}` : ''}</span>
+								<span
+									aria-hidden="true"
+									class={cn(
+										'block h-4 w-4 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-125',
+										kinds[club.kind ?? 'ss'] ?? 'bg-orange',
+									)}
+								></span>
+							</span>
+						</div>
+					))}
+				</div>
+			) : null}
+		</div>
+	</div>
+
+	{/*
+	  Body na obrázku nejsou přístupné myší ani čtečkou samy o sobě, proto
+	  pod mapou zůstává čitelný výpis klubů po krajích.
+	*/}
+	{data.showList !== false && regions.length > 0 && (
+		<div class="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+			{regions.map(([region, list]) => (
+				<div>
+					<h3 class="font-display text-lg font-bold text-subheading">{region}</h3>
+					<ul class="mt-3 space-y-2">
+						{list.map((club) => (
+							<li>
+								<span class="font-semibold">{club.name}</span>
+								{club.city && <span class="text-muted">, {club.city}</span>}
+								{club.website && (
+									<a href={club.website} class="ms-2 underline underline-offset-2" target="_blank" rel="noopener noreferrer">web</a>
+								)}
+							</li>
+						))}
+					</ul>
+				</div>
+			))}
+		</div>
+	)}
+</Section>

@@ -1,0 +1,121 @@
+{
+  "siteName": "Czech Debate Association",
+  "logo": "/media/brand/logo.png",
+  "logoAlt": "Czech Debate Association",
+  "nav": [
+    {
+      "label": "Debate portal",
+      "href": "/portal/",
+      "variant": "lime"
+    },
+    {
+      "label": "Debating",
+      "href": "/en/",
+      "variant": "apricot",
+      "children": [
+        {
+          "label": "High school debate",
+          "href": "/debata/debatni-liga/"
+        },
+        {
+          "label": "Elementary school debate",
+          "href": "/debata/debatiada/"
+        },
+        {
+          "label": "Prague Debate Spring",
+          "href": "https://pds.debatovani.cz"
+        }
+      ]
+    },
+    {
+      "label": "Start debating",
+      "href": "/debata/zacnete-debatovat/",
+      "variant": "apricot",
+      "children": [
+        {
+          "label": "How to start",
+          "href": "/debata/zacnete-debatovat/"
+        },
+        {
+          "label": "Courses",
+          "href": "/debata/kurzy/"
+        },
+        {
+          "label": "E-learning",
+          "href": "https://elearning.debatovani.cz"
+        }
+      ]
+    },
+    {
+      "label": "News",
+      "href": "/aktuality/",
+      "variant": "apricot"
+    },
+    {
+      "label": "About us",
+      "href": "/o-nas/",
+      "variant": "apricot",
+      "children": [
+        {
+          "label": "People",
+          "href": "/o-nas/lide/"
+        },
+        {
+          "label": "Support us",
+          "href": "/o-nas/podporte-nas/"
+        },
+        {
+          "label": "Projects",
+          "href": "/projekty/"
+        },
+        {
+          "label": "Contact",
+          "href": "/kontakt/"
+        },
+        {
+          "label": "Debate club map",
+          "href": "/kontakt/mapa-debatnich-klubu/"
+        }
+      ]
+    }
+  ],
+  "footer": {
+    "background": "/media/brand/paticka.webp",
+    "intro": "We are active on social media too — like and follow us so you never miss a thing!",
+    "socialTitle": "Connect with us:",
+    "newsletterTitle": "Subscribe to our newsletter!",
+    "newsletterLabel": "Subscribe now",
+    "newsletterHref": "/kontakt/newsletter/",
+    "copyright": "© Czech Debate Association, 2026",
+    "links": [],
+    "newsletterPlaceholder": "Enter your e-mail",
+    "newsletterField": "email"
+  },
+  "social": [
+    {
+      "label": "Facebook",
+      "href": "https://www.facebook.com/debatovani.cz",
+      "icon": "fa6-brands:facebook-f",
+      "color": "#3B5998"
+    },
+    {
+      "label": "YouTube",
+      "href": "https://www.youtube.com/@DebatovaniCZ",
+      "icon": "fa6-brands:youtube",
+      "color": "#CD201F"
+    },
+    {
+      "label": "Instagram",
+      "href": "https://www.instagram.com/debatovani.cz/?hl=cs",
+      "icon": "fa6-brands:instagram",
+      "color": "#262626"
+    }
+  ],
+  "contact": {
+    "organization": "Czech Debate Association"
+  },
+  "seo": {
+    "title": "Czech Debate Association – Debating",
+    "description": "We educate elementary and high school students through the worldwide method of competitive academic debate. We teach more than speech, we show how to think."
+  }
+}

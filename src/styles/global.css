@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+@import './tokens.css';
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Kotvy nesmí zmizet pod lepivou hlavičkou */
+    scroll-padding-top: calc(var(--header-height) + 16px);
+  }
+
+  body {
+    background: var(--color-surface);
+    color: var(--color-copy);
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: var(--leading-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    line-height: var(--leading-heading);
+    color: var(--color-heading);
+  }
+
+  a {
+    color: var(--color-link);
+    text-decoration: none;
+  }
+  a:hover { color: var(--color-link-hover); }
+
+  /* Viditelný focus — dnešní web ho nemá, tohle je bezpečné vylepšení */
+  :focus-visible {
+    outline: 3px solid var(--color-blue);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-lime-pale);
+    color: var(--color-ink);
+  }
+}
+
+@layer components {
+  /*
+   * Rich text z CMS. Odpovídá tomu, co dnes vypadává z Elementor
+   * `text-editor` widgetu: Poppins 16 px / 175 %, odkazy oranžové.
+   */
+  .prose-adk {
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: var(--leading-body);
+    /* Barvu dědí po sekci — na fotce je text bílý, v sekci s čísly černý.
+     * Pevná hodnota by tu volbu přebila. */
+    color: inherit;
+  }
+  .prose-adk > * + * { margin-top: 1em; }
+  .prose-adk h2 { font-size: var(--text-h2); font-weight: 700; margin-top: 1.5em; }
+  .prose-adk h3 { font-size: var(--text-h3); font-weight: 700; margin-top: 1.5em; }
+  .prose-adk h4 { font-size: var(--text-h4); font-weight: 600; margin-top: 1.5em; }
+  .prose-adk ul { list-style: disc; padding-inline-start: 1.5em; }
+  .prose-adk ol { list-style: decimal; padding-inline-start: 1.5em; }
+  .prose-adk li + li { margin-top: 0.25em; }
+  .prose-adk a { text-decoration: underline; text-underline-offset: 2px; }
+  .prose-adk strong { font-weight: 600; }
+  .prose-adk img { border-radius: var(--radius-card); }
+  .prose-adk blockquote {
+    border-inline-start: 4px solid var(--color-lime);
+    padding-inline-start: 1em;
+    font-style: italic;
+  }
+  .prose-adk table { width: 100%; border-collapse: collapse; }
+  .prose-adk th, .prose-adk td {
+    border: 1px solid var(--color-line);
+    padding: 0.5em 0.75em;
+    text-align: start;
+  }
+  .prose-adk th { background: var(--color-surface-alt); font-weight: 600; }
+
+  /* Popisek nad nadpisem — Poppins, verzálky, prostrkání 4 px */
+  .eyebrow {
+    font-family: var(--font-display);
+    font-size: var(--text-eyebrow);
+    font-weight: 400;
+    line-height: var(--leading-heading);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "siteName": "Asociace debatních klubů z.s.",
+  "logo": "/media/brand/logo.png",
+  "logoAlt": "Asociace debatních klubů",
+  "nav": [
+    {
+      "label": "Portál debatování",
+      "href": "/portal/",
+      "variant": "lime"
+    },
+    {
+      "label": "Debatování",
+      "href": "/debata/",
+      "variant": "apricot",
+      "children": [
+        {
+          "label": "Debatování pro SŠ",
+          "href": "/debata/debatni-liga/"
+        },
+        {
+          "label": "Debatování pro ZŠ",
+          "href": "/debata/debatiada/"
+        },
+        {
+          "label": "Prague Debate Spring",
+          "href": "https://pds.debatovani.cz"
+        }
+      ]
+    },
+    {
+      "label": "Začněte debatovat",
+      "href": "/debata/zacnete-debatovat/",
+      "variant": "apricot",
+      "children": [
+        {
+          "label": "Jak začít debatovat?",
+          "href": "/debata/zacnete-debatovat/"
+        },
+        {
+          "label": "Nabídka kurzů",
+          "href": "/debata/kurzy/"
+        },
+        {
+          "label": "E-learning",
+          "href": "https://elearning.debatovani.cz"
+        }
+      ]
+    },
+    {
+      "label": "Aktuality",
+      "href": "/aktuality/",
+      "variant": "apricot"
+    },
+    {
+      "label": "O nás",
+      "href": "/o-nas/",
+      "variant": "apricot",
+      "children": [
+        {
+          "label": "Lidé",
+          "href": "/o-nas/lide/"
+        },
+        {
+          "label": "Podpořte nás",
+          "href": "/o-nas/podporte-nas/"
+        },
+        {
+          "label": "Projekty",
+          "href": "/projekty/"
+        },
+        {
+          "label": "Kontakt",
+          "href": "/kontakt/"
+        },
+        {
+          "label": "Mapa debatních klubů",
+          "href": "/kontakt/mapa-debatnich-klubu/"
+        }
+      ]
+    }
+  ],
+  "footer": {
+    "background": "/media/brand/paticka.webp",
+    "intro": "Jsme aktivní i na sociálních sítích, aby Vám nic neuteklo, lajkněte a odebírejte nás!",
+    "socialTitle": "Spojte se s námi:",
+    "newsletterTitle": "Odebírejte náš newsletter!",
+    "newsletterLabel": "Odebírejte nyní",
+    "newsletterHref": "/kontakt/newsletter/",
+    "copyright": "© Asociace debatních klubů z.s., 2026",
+    "links": [],
+    "newsletterPlaceholder": "Vložte Váš e-mail",
+    "newsletterField": "email"
+  },
+  "social": [
+    {
+      "label": "Facebook",
+      "href": "https://www.facebook.com/debatovani.cz",
+      "icon": "fa6-brands:facebook-f",
+      "color": "#3B5998"
+    },
+    {
+      "label": "YouTube",
+      "href": "https://www.youtube.com/@DebatovaniCZ",
+      "icon": "fa6-brands:youtube",
+      "color": "#CD201F"
+    },
+    {
+      "label": "Instagram",
+      "href": "https://www.instagram.com/debatovani.cz/?hl=cs",
+      "icon": "fa6-brands:instagram",
+      "color": "#262626"
+    }
+  ],
+  "contact": {
+    "organization": "Asociace debatních klubů z.s."
+  },
+  "seo": {
+    "title": "Asociace debatních klubů z.s. – Debatování",
+    "description": "Vzděláváme žáky základních a středních škol celosvětově rozšířenou metodou soutěžní debaty. Učíme nejen mluvit, ale i přemýšlet."
+  }
+}

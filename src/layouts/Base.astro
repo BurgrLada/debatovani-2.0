@@ -1,0 +1,49 @@
+---
+import BaseHead from '../components/layout/BaseHead.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import { getGlobal } from '../lib/data';
+import { t, type Lang } from '../lib/i18n';
+
+interface Props {
+	title?: string | null;
+	description?: string | null;
+	image?: string | null;
+	noindex?: boolean | null;
+	type?: 'website' | 'article';
+	lang?: Lang;
+}
+
+const { title, description, image, noindex, type, lang = 'cs' } = Astro.props;
+const global = (await getGlobal(lang)).data?.global ?? null;
+const strings = t(lang);
+
+const pageTitle = title
+	? `${title} – ${global?.siteName ?? 'Asociace debatních klubů'}`
+	: (global?.seo?.title ?? global?.siteName ?? 'Asociace debatních klubů');
+---
+<html lang={lang}>
+	<head>
+		<BaseHead
+			title={pageTitle}
+			description={description ?? global?.seo?.description}
+			image={image ?? global?.seo?.image}
+			noindex={noindex}
+			type={type}
+			lang={lang}
+		/>
+	</head>
+	<body class="flex min-h-screen flex-col">
+		<a
+			href="#obsah"
+			class="sr-only rounded-button bg-action px-4 py-2 focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-[60]"
+		>
+			{strings.skipToContent}
+		</a>
+		<Header global={global} currentPath={Astro.url.pathname} lang={lang} />
+		<main id="obsah" class="flex-1">
+			<slot />
+		</main>
+		<Footer global={global} />
+	</body>
+</html>

@@ -1,0 +1,61 @@
+---
+/**
+ * Dokumenty zůstávají na Google Drive (docs/04, otázka 14) — web je jen
+ * strukturovaně vypisuje.
+ */
+import { Icon } from 'astro-icon/components';
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import type { DocumentListBlock } from '../../lib/data';
+
+interface Props { data: DocumentListBlock }
+
+const { data } = Astro.props;
+const items = (data.items ?? []).filter((i) => i !== null);
+const icons: Record<string, string> = {
+	pdf: 'fa6-solid:file-pdf',
+	doc: 'fa6-solid:file-lines',
+	sheet: 'fa6-solid:file-excel',
+	folder: 'fa6-solid:folder-open',
+	link: 'fa6-solid:link',
+};
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.title && (
+		<div data-tina-field={tinaField(data, 'title')}>
+			<Heading
+				level={2}
+				size={(data.titleSize as never) ?? 'section'}
+				tone={(data.titleTone as never) ?? 'heading'}
+				align={(data.titleAlign as never) ?? 'center'} class="mb-8"
+			>{data.title}</Heading>
+		</div>
+	)}
+	<ul class="mx-auto max-w-3xl divide-y divide-line border-y border-line">
+		{items.map((item) => (
+			<li data-tina-field={tinaField(item)} class="flex items-start gap-4 py-4">
+				<Icon name={icons[item.kind ?? 'link'] ?? icons.link} class="mt-1 h-5 w-5 shrink-0 text-heading" />
+				<div>
+					<a href={item.href ?? '#'} class="font-semibold underline underline-offset-2" target="_blank" rel="noopener noreferrer">
+						{item.title}
+					</a>
+					{item.note && <p class="text-caption text-muted">{item.note}</p>}
+				</div>
+			</li>
+		))}
+	</ul>
+</Section>

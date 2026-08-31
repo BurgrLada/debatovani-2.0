@@ -1,0 +1,129 @@
+---
+/**
+ * Loga partnerů. Na produkci je to swiper: pět log vedle sebe a skok o jedno
+ * každých pět sekund.
+ *
+ * Tady je to plynulý pás poháněný CSS animací. Proti swiperu to nepotřebuje
+ * knihovnu ani JavaScript, nepřeskakuje a při `prefers-reduced-motion` se
+ * prostě nehýbe — místo toho zůstane vodorovně rolovatelný. Seznam log je
+ * v DOM dvakrát, aby smyčka navazovala; kopie je pro čtečky obrazovky
+ * i pro tabulátor neviditelná.
+ */
+import { Image } from 'astro:assets';
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import type { PartnerLogosBlock } from '../../lib/data';
+
+interface Props { data: PartnerLogosBlock }
+
+const { data } = Astro.props;
+const items = (data.items ?? []).filter((i) => i !== null);
+
+/** Delší seznam se posouvá delší dobu, aby rychlost zůstala stejná. */
+const duration = Math.max(20, items.length * 5);
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.title && (
+		<div data-tina-field={tinaField(data, 'title')}>
+			<Heading
+				level={2}
+				size={(data.titleSize as never) ?? 'section'}
+				tone={(data.titleTone as never) ?? 'heading'}
+				align={(data.titleAlign as never) ?? 'center'} class="mb-10"
+			>{data.title}</Heading>
+		</div>
+	)}
+
+	<div class="partner-marquee-viewport">
+		{[false, true].map((isDuplicate) => (
+			<ul
+				class="partner-marquee flex w-max shrink-0 items-center gap-12"
+				style={`--partner-marquee-duration:${duration}s`}
+				aria-hidden={isDuplicate ? 'true' : undefined}
+			>
+				{items.map((item) => {
+					const logo = item.logo && (
+						<Image
+							src={item.logo}
+							alt={isDuplicate ? '' : (item.name ?? '')}
+							width={420}
+							height={200}
+							format="webp"
+							class="h-[100px] w-[180px] object-contain"
+						/>
+					);
+					return (
+						<li data-tina-field={isDuplicate ? undefined : tinaField(item)} class="shrink-0">
+							{item.href ? (
+								<a
+									href={item.href}
+									target="_blank"
+									rel="noopener noreferrer"
+									title={item.name ?? undefined}
+									tabindex={isDuplicate ? -1 : undefined}
+									class="block"
+								>
+									{logo}
+								</a>
+							) : logo}
+						</li>
+					);
+				})}
+			</ul>
+		))}
+	</div>
+</Section>
+
+<style>
+	/* Dva seznamy vedle sebe; posun o šířku jednoho z nich smyčku uzavře. */
+	.partner-marquee-viewport {
+		display: flex;
+		overflow: hidden;
+	}
+	.partner-marquee {
+		padding-inline-end: 3rem;
+		animation: partner-marquee var(--partner-marquee-duration, 40s) linear infinite;
+	}
+
+	/*
+	 * Pauza patří sem, ne do utility třídy: zkratka `animation` výše nastavuje
+	 * i `animation-play-state: running`, takže by utilitu se stejnou nebo nižší
+	 * specificitou přebila a pás by se při najetí nezastavil.
+	 */
+	.partner-marquee-viewport:hover .partner-marquee,
+	.partner-marquee-viewport:focus-within .partner-marquee {
+		animation-play-state: paused;
+	}
+
+	@keyframes partner-marquee {
+		from { transform: translateX(0); }
+		to { transform: translateX(-100%); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.partner-marquee-viewport {
+			overflow-x: auto;
+		}
+		.partner-marquee {
+			animation: none;
+		}
+		/* Bez animace nemá zdvojený seznam smysl. */
+		.partner-marquee[aria-hidden='true'] {
+			display: none;
+		}
+	}
+</style>

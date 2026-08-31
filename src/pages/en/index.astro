@@ -1,0 +1,29 @@
+---
+/**
+ * Anglická úvodní stránka. Rozsah anglické verze je otevřená otázka
+ * (docs/04, otázka 8), takže dnes je anglicky jen tahle stránka — obsah leží
+ * v `src/content/page/en/` a přibývat může postupně, bez zásahu do routingu.
+ */
+import Base from '../../layouts/Base.astro';
+import TinaIsland from '@tinacms/astro/TinaIsland.astro';
+import PageBody from '../../components/islands/PageBody.astro';
+import { getPage } from '../../lib/data';
+import { islands } from '../../lib/islands';
+
+const lang = 'en' as const;
+const path = 'home';
+const page = await getPage(path, lang);
+const data = page.data?.page;
+if (!data) return new Response('Not Found', { status: 404 });
+---
+<Base
+	lang={lang}
+	title={null}
+	description={data.seo?.description}
+	image={data.seo?.image}
+	noindex={data.seo?.noindex}
+>
+	<TinaIsland name="page" wrapper={islands.page.wrapper} params={{ path, lang }} primary>
+		<PageBody data={data} />
+	</TinaIsland>
+</Base>

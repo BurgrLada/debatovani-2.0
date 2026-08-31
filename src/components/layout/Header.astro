@@ -1,0 +1,129 @@
+---
+/**
+ * Hlavička. Rekonstrukce dnešního stavu: logo vlevo, položky menu vpravo jako
+ * barevná tlačítka pevné velikosti (120 × 57 px, změřeno na produkci),
+ * podmenu na rozbalení a přepínač jazyka vlaječkou.
+ *
+ * Vlaječku na dnešním webu dolepuje inline skript do menu; tady je součástí
+ * navigace, takže funguje i bez JS a čte se ze čtečky obrazovky.
+ */
+import { Image } from 'astro:assets';
+import { tinaField } from '@tinacms/astro/tina-field';
+import Container from '../ui/Container.astro';
+import { localizeHref, switcher, t, type Lang } from '../../lib/i18n';
+import type { CmsGlobal } from '../../lib/data';
+
+interface Props {
+	global?: CmsGlobal | null;
+	currentPath?: string;
+	lang?: Lang;
+}
+
+const { global, currentPath = '', lang = 'cs' } = Astro.props;
+const nav = (global?.nav ?? []).filter((item) => item !== null);
+const strings = t(lang);
+const flag = switcher(lang);
+
+const variants: Record<string, string> = {
+	apricot: 'bg-action-warm',
+	lime: 'bg-action-alt',
+	sky: 'bg-action',
+};
+
+const isCurrent = (href?: string | null) =>
+	!!href && href !== '/' && currentPath.startsWith(href.replace(/^https?:\/\/[^/]+/, ''));
+---
+<header class="sticky top-0 z-50 border-b border-line bg-surface">
+	<Container class="flex min-h-[var(--header-height)] items-center justify-between gap-6 py-3">
+		<a href={localizeHref('/', lang)} class="shrink-0" data-tina-field={global ? tinaField(global, 'logo') : undefined}>
+			{global?.logo ? (
+				<Image
+					src={global.logo}
+					alt={global.logoAlt ?? global.siteName ?? 'Asociace debatních klubů'}
+					width={280}
+					height={130}
+					format="webp"
+					loading="eager"
+					class="h-14 w-auto"
+				/>
+			) : (
+				<span class="font-display text-lg font-bold">{global?.siteName}</span>
+			)}
+		</a>
+
+		<button
+			type="button"
+			class="rounded-nav border border-line px-3 py-2 lg:hidden"
+			aria-expanded="false"
+			aria-controls="hlavni-navigace"
+			data-menu-toggle
+		>
+			<span class="sr-only">{strings.openMenu}</span>
+			<span aria-hidden="true" class="block h-0.5 w-6 bg-current"></span>
+			<span aria-hidden="true" class="mt-1.5 block h-0.5 w-6 bg-current"></span>
+			<span aria-hidden="true" class="mt-1.5 block h-0.5 w-6 bg-current"></span>
+		</button>
+
+		<nav
+			id="hlavni-navigace"
+			aria-label={strings.mainNav}
+			class="absolute inset-x-0 top-full hidden border-b border-line bg-surface p-4 lg:static lg:block lg:border-0 lg:bg-transparent lg:p-0"
+			data-menu
+		>
+			<ul class="flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-[15px]">
+				{nav.map((item) => {
+					const children = (item.children ?? []).filter((child) => child !== null);
+					return (
+						<li class="relative lg:group" data-tina-field={tinaField(item)}>
+							<a
+								href={item.href ?? '#'}
+								aria-current={isCurrent(item.href) ? 'page' : undefined}
+								class={`flex items-center justify-center rounded-nav p-[5px] text-center font-display text-base leading-5 text-black transition-[filter] hover:brightness-95 lg:h-[57px] lg:w-[120px] ${variants[item.variant ?? 'apricot']}`}
+							>
+								{item.label}
+							</a>
+							{children.length > 0 && (
+								<ul class="mt-1 space-y-1 ps-4 lg:absolute lg:start-0 lg:top-full lg:z-10 lg:mt-1 lg:hidden lg:w-60 lg:space-y-0 lg:rounded-nav lg:border lg:border-line lg:bg-surface lg:p-2 lg:ps-2 lg:shadow-lg lg:group-hover:block lg:group-focus-within:block">
+									{children.map((child) => (
+										<li>
+											<a
+												href={child.href ?? '#'}
+												class="block rounded-nav px-3 py-1.5 text-caption text-copy hover:bg-surface-alt"
+											>
+												{child.label}
+											</a>
+										</li>
+									))}
+								</ul>
+							)}
+						</li>
+					);
+				})}
+
+				<li class="flex items-center">
+					<a
+						href={localizeHref('/', flag.to)}
+						title={strings.switchTo}
+						class="block rounded-nav"
+						hreflang={flag.to}
+					>
+						<span class="sr-only">{strings.switchTo}</span>
+						{/* Poloměr patří odkazu, ne obrázku — zaoblení samotné vlajky by jí uřízlo rohy. */}
+						<img src={flag.flag} alt={flag.alt} width="25" height="25" class="h-[25px] w-[25px]" />
+					</a>
+				</li>
+			</ul>
+		</nav>
+	</Container>
+</header>
+
+<script>
+	const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+	const menu = document.querySelector<HTMLElement>('[data-menu]');
+
+	toggle?.addEventListener('click', () => {
+		const open = toggle.getAttribute('aria-expanded') === 'true';
+		toggle.setAttribute('aria-expanded', String(!open));
+		menu?.classList.toggle('hidden', open);
+	});
+</script>

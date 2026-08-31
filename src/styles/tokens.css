@@ -1,0 +1,156 @@
+/*
+ * Design tokeny debatovani.cz
+ * ============================
+ * Hodnoty jsou změřené na stávajícím webu (Elementor kit `.elementor-kit-9`,
+ * šablona `alone`, computed styles živých stránek) — rekonstrukce je záměrně
+ * 1:1, viz docs/11-design-tokeny.md.
+ *
+ * Tokeny žijí v Tailwind `@theme`, takže z každého vzniká utilita
+ * (`bg-surface-alt`, `text-heading`, `font-display`, `rounded-button`) a
+ * zároveň CSS proměnná pro ruční styly. Jeden zdroj pravdy, dvě použití.
+ *
+ * Struktura je dvouvrstvá, aby šla paleta měnit plošně:
+ *   1. PALETA  — syrové barvy, jediné místo s hex hodnotami
+ *   2. ROLE    — sémantické tokeny, které používají komponenty
+ * Přebarvit web = přepsat vrstvu 1, případně přemapovat vrstvu 2.
+ *
+ * TODO(přístupnost): dnešní paleta neprochází WCAG AA — limetka má na bílé
+ * kontrast 1,55:1, modrá 2,44:1, oranžová 2,51:1. docs/11 sekce 2 obsahuje
+ * hotové ztmavené varianty; přepnutí je změna vrstvy 1 a rolí níže.
+ */
+
+@theme {
+  /* ================= 1. PALETA ================= */
+
+  /* Značka — čtyři barvy vytažené z loga (logo_vector.png) */
+  --color-lime: #c8da2b;
+  --color-blue: #00b2ef;
+  --color-orange: #f6862f;
+  --color-ink: #15191c;
+
+  /* Ztlumené varianty z Elementor kitu — tyhle web reálně používá */
+  --color-lime-muted: #d1d626;
+  --color-blue-muted: #23a3dd;
+  --color-orange-muted: #d88230;
+
+  /* Pastelová linie ze šablony `alone`. Dědictví demo obsahu, ne značka
+   * (docs/11 sekce 1). Zůstává, protože zadáním je věrná rekonstrukce. */
+  --color-apricot: #ecc198;
+  --color-sky: #bde3f5;
+  --color-lime-pale: #e8eb93;
+  --color-peach: #ffbc7d;
+
+  /* Plochy pozadí sekcí */
+  --color-linen: #faf0e6;
+  --color-lime-wash: #f9fae5;
+  --color-navy: #002866;
+
+  /* Neutrály */
+  --color-white: #ffffff;
+  --color-gray-050: #f0f0f1;
+  --color-gray-100: #f2f2f2;
+  --color-gray-200: #e7e6e4;
+  --color-gray-500: #808080;
+  --color-gray-800: #333333;
+  --color-black: #000000;
+
+  /* ================= 2. ROLE ================= */
+
+  --color-surface: var(--color-white);
+  --color-surface-alt: var(--color-linen);
+  --color-surface-lime: var(--color-lime-wash);
+  --color-surface-dark: var(--color-navy);
+
+  --color-copy: var(--color-gray-800);
+  --color-muted: var(--color-gray-500);
+  --color-inverse: var(--color-white);
+
+  --color-heading: var(--color-orange-muted);
+  --color-subheading: var(--color-blue-muted);
+  --color-link: var(--color-orange-muted);
+  --color-link-hover: var(--color-orange);
+
+  /* Tlačítka: dnešní web nemá jednu akční barvu — pět tlačítek na homepage
+   * si konkuruje (docs/04, otázka 24). Varianta je proto volba redakce,
+   * ne odvozená role. */
+  --color-action: var(--color-sky);
+  --color-action-ink: var(--color-black);
+  --color-action-alt: var(--color-lime-pale);
+  --color-action-alt-ink: var(--color-black);
+  --color-action-warm: var(--color-apricot);
+  --color-action-warm-ink: var(--color-black);
+
+  --color-line: var(--color-gray-200);
+
+  /* Pruh s názvem stránky — šedé pozadí, tmavě modrý nadpis */
+  --color-titlebar: var(--color-gray-050);
+  --color-titlebar-ink: var(--color-navy);
+
+  /* ================= TYPOGRAFIE ================= */
+
+  --font-display: 'Poppins', system-ui, -apple-system, sans-serif;
+  /* `@fontsource-variable/roboto` registruje rodinu jako „Roboto Variable“;
+   * `Roboto` zůstává pro případ, že by ho měl uživatel v systému. */
+  --font-body: 'Roboto Variable', 'Roboto', system-ui, -apple-system, sans-serif;
+
+  /* Škála změřená na webu; responzivní hodnoty jsou v :root níže */
+  --text-hero: 70px;
+  --text-eyebrow: 32px;
+  --text-section: 45px;
+  --text-lead: 40px;
+  --text-panel: 28px;
+  --text-h1: 42px;
+  --text-h2: 32px;
+  --text-h3: 24px;
+  --text-h4: 18px;
+  /* Šablona má h5 = 14 px a h6 = 12 px, tedy méně než tělo textu (16 px).
+   * To je vada šablony, ne záměr — v nové škále je rozlišuje váha. */
+  --text-h5: 18px;
+  --text-h6: 16px;
+  --text-caption: 15px;
+  --text-pagetitle: 30px;
+
+  /* ================= ROZMĚRY ================= */
+
+  --radius-button: 3px;
+  --radius-nav: 5px;
+  --radius-card: 5px;
+}
+
+:root {
+  --leading-body: 1.75;
+  --leading-heading: 1.25;
+  --tracking-caps: 4px;
+
+  --container-max: 1200px;
+  /* Jediná svislá mezera, kterou dnešní web používá — viz docs/11 sekce 5. */
+  --space-block: 30px;
+  /* O kolik se zanořená sekce překrývá se sousedy (blok „Zasadit do
+   * sousedních sekcí“). Sousedé musí mít aspoň tohle odsazení. */
+  --space-overlap: 60px;
+  --header-height: 80px;
+}
+
+/* Breakpointy 1024 a 767 px odpovídají Elementor kitu. Utility `text-hero`
+ * atd. čtou tyto proměnné, takže se zmenší samy. */
+@media (max-width: 1024px) {
+  :root {
+    --text-hero: 48px;
+    --text-eyebrow: 24px;
+    --text-section: 34px;
+    --text-lead: 32px;
+    --text-panel: 24px;
+    --text-caption: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --text-hero: 42px;
+    --text-eyebrow: 20px;
+    --text-section: 28px;
+    --text-lead: 26px;
+    --text-panel: 22px;
+    --text-caption: 20px;
+  }
+}

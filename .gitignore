@@ -26,3 +26,8 @@ pnpm-debug.log*
 
 tmp/
 
+
+# TinaCMS
+# Vygenerovaný klient, typy a sestavená administrace vznikají při
+# `pnpm dev`/`pnpm build`. Detaily v tina/.gitignore a public/admin/.gitignore.
+tina/__generated__/

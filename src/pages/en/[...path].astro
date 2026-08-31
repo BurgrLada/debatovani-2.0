@@ -1,0 +1,36 @@
+---
+/**
+ * Anglické obsahové stránky. Cesta souboru v `src/content/page/en/` je zároveň
+ * URL pod `/en/`, stejně jako u české verze na kořeni.
+ */
+import Base from '../../layouts/Base.astro';
+import TinaIsland from '@tinacms/astro/TinaIsland.astro';
+import PageBody from '../../components/islands/PageBody.astro';
+import { getPage, listPages } from '../../lib/data';
+import { islands } from '../../lib/islands';
+
+const lang = 'en' as const;
+
+export async function getStaticPaths() {
+	const pages = await listPages('en');
+	return pages
+		.filter((page) => page.path !== 'home')
+		.map((page) => ({ params: { path: page.path } }));
+}
+
+const path = (Astro.params.path ?? '').toString();
+const page = await getPage(path, lang);
+const data = page.data?.page;
+if (!data) return new Response('Not Found', { status: 404 });
+---
+<Base
+	lang={lang}
+	title={data.seo?.title || data.title}
+	description={data.seo?.description}
+	image={data.seo?.image}
+	noindex={data.seo?.noindex}
+>
+	<TinaIsland name="page" wrapper={islands.page.wrapper} params={{ path, lang }} primary>
+		<PageBody data={data} />
+	</TinaIsland>
+</Base>

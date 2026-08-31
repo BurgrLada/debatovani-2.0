@@ -1,0 +1,19 @@
+---
+import Blocks from '../blocks/Blocks.astro';
+import PageTitle from '../layout/PageTitle.astro';
+import type { CmsPage } from '../../lib/data';
+
+interface Props { data?: CmsPage | null }
+
+const { data } = Astro.props;
+
+// Stránka s hero blokem má vlastní H1; ostatní dostanou pruh s názvem,
+// stejně jako dnes.
+const startsWithHero = data?.blocks?.[0]?.__typename === 'PageBlocksHero';
+---
+{data && (
+	<>
+		{!startsWithHero && <PageTitle title={data.title} />}
+		<Blocks blocks={data.blocks} />
+	</>
+)}

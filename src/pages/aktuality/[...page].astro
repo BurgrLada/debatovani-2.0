@@ -1,0 +1,39 @@
+---
+/**
+ * Výpis aktualit se stránkováním. `/aktuality/`, `/aktuality/2/`, …
+ * Články samotné jsou na `/aktuality/<slug>/` — jejich routa je specifičtější,
+ * takže má přednost.
+ */
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+import Container from '../../components/ui/Container.astro';
+import Heading from '../../components/ui/Heading.astro';
+import ArticleCard from '../../components/ui/ArticleCard.astro';
+import { listArticles } from '../../lib/data';
+import { t } from '../../lib/i18n';
+
+export const getStaticPaths = (async ({ paginate }) => {
+	const articles = await listArticles();
+	return paginate(articles, { pageSize: 12 });
+}) satisfies GetStaticPaths;
+
+const { page } = Astro.props;
+const strings = t('cs');
+---
+<Base title="Aktuality" description="Novinky, výsledky a výzvy z debatního programu.">
+	<Container class="py-[calc(var(--space-block)*2)]">
+		<Heading level={1} size="section" align="center">Aktuality</Heading>
+
+		<ul class="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+			{page.data.map((article) => <li><ArticleCard article={article} /></li>)}
+		</ul>
+
+		{page.lastPage > 1 && (
+			<nav aria-label={strings.pagination} class="mt-14 flex items-center justify-center gap-4">
+				{page.url.prev && <a href={page.url.prev} class="font-semibold underline underline-offset-2">{strings.newer}</a>}
+				<span class="text-muted">{strings.pageOf(page.currentPage, page.lastPage)}</span>
+				{page.url.next && <a href={page.url.next} class="font-semibold underline underline-offset-2">{strings.older}</a>}
+			</nav>
+		)}
+	</Container>
+</Base>

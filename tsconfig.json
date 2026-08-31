@@ -1,5 +1,13 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  // `src/content` je obsah, ne kód — typová kontrola 350+ MDX souborů
+  // s rozsáhlým frontmatterem vyčerpá paměť a nic nekontroluje.
+  // `tmp` je referenční šablona, ne součást projektu.
+  "exclude": ["dist", "tmp", "node_modules", "src/content", "public"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "strictNullChecks": true
+  }
 }

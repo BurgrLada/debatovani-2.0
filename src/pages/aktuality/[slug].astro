@@ -1,0 +1,22 @@
+---
+import Base from '../../layouts/Base.astro';
+import TinaIsland from '@tinacms/astro/TinaIsland.astro';
+import ArticleBody from '../../components/islands/ArticleBody.astro';
+import { getArticle, listArticles } from '../../lib/data';
+import { islands } from '../../lib/islands';
+
+export async function getStaticPaths() {
+	const articles = await listArticles();
+	return articles.map((article) => ({ params: { slug: article.slug } }));
+}
+
+const slug = (Astro.params.slug ?? '').toString();
+const article = await getArticle(slug);
+const data = article.data?.article;
+if (!data) return new Response('Not Found', { status: 404 });
+---
+<Base title={data.title} description={data.perex} image={data.cover} type="article">
+	<TinaIsland name="article" wrapper={islands.article.wrapper} params={{ slug }} primary>
+		<ArticleBody data={data} />
+	</TinaIsland>
+</Base>

@@ -2,7 +2,30 @@
 
 Redesign webu Asociace debatních klubů z.s. (https://debatovani.cz).
 
-**Fáze:** analýza uzavřená, architektura rozhodnutá, vstupy potvrzené. Implementace může začít — stav otevřených otázek je v [docs/04-otazky.md](docs/04-otazky.md).
+**Fáze:** implementace běží. Web stojí na Astru + TinaCMS, obsah je zmigrovaný z WordPressu. Co zbývá dodělat, je v [docs/13-todo.md](docs/13-todo.md); jak to funguje, popisuje [docs/12-implementace.md](docs/12-implementace.md).
+
+## Rychlý start
+
+```bash
+pnpm install
+pnpm dev      # web na http://localhost:4321, administrace na /admin
+```
+
+`pnpm dev` potřebuje terminál s TTY — bez něj se `astro dev` odpojí na pozadí
+a Tina server skončí s ním. V takovém případě spusťte `pnpm exec tinacms dev`
+a `pnpm exec astro dev --background` zvlášť.
+
+```bash
+pnpm build    # produkční build
+pnpm check    # kontrola typů
+```
+
+Migrace z WordPressu (opakovatelná, pouští se znovu před spuštěním):
+
+```bash
+node scripts/migrate-articles.mjs
+node scripts/migrate-pages.mjs
+```
 
 **Zadání:** nevzniká nový vzhled — jde o **rekonstrukci stávajícího webu v jiné technologii** (odchod z WordPressu k vlastnímu řešení). Obsah bude spravovat **pár technicky zdatných lidí**, kterým se má dát v editoru spíš víc volnosti. Potvrzená omezení: **žádný SaaS pro CMS a obsah** a **vizuální editace je nutnost**. **Node server s databází je k dispozici** — hosting není omezení. **Git provider je GitHub** — omezení „žádný SaaS“ se netýká vývojové infrastruktury.
 
@@ -21,6 +44,8 @@ Redesign webu Asociace debatních klubů z.s. (https://debatovani.cz).
 | [docs/09-tinacms-prakticky.md](docs/09-tinacms-prakticky.md) | **TinaCMS prakticky** — WYSIWYG, bloky, vícejazyčnost, custom HTML |
 | [docs/10-i18n-varianty.md](docs/10-i18n-varianty.md) | **Vícejazyčnost** napříč kandidáty — proč Puck + CMS i18n nevyřeší, kde je Payload silnější |
 | [docs/11-design-tokeny.md](docs/11-design-tokeny.md) | **Design tokeny** — paleta a typografie změřená z loga a stávajícího webu, oddělení značky od šablony |
+| [docs/12-implementace.md](docs/12-implementace.md) | **Implementace** — co je hotové, struktura projektu, jak přidat blok, na co si dát pozor |
+| [docs/13-todo.md](docs/13-todo.md) | **Co zbývá** — seřazené podle toho, co blokuje spuštění |
 
 ## Rozhodnutá architektura
 
@@ -35,7 +60,10 @@ Redesign webu Asociace debatních klubů z.s. (https://debatovani.cz).
 - **GitHub Actions** spouští buildy, **GitHub OAuth** přihlašuje do administrace, média na **Cloudflare R2**.
 - **Adresářová konvence pro jazyky od začátku** (`content/<kolekce>/<jazyk>/…`), i když se o rozsahu anglické verze rozhodne později.
 - **Portál debatování je rozšíření** — obsahový model ani routing hlavního webu se od něj neodvozují.
-- **Design tokeny jsou hotové** — [docs/11](docs/11-design-tokeny.md). Značku tvoří limetka `#C8DA2B`, modrá `#00B2EF`, oranžová `#F6862F` a uhel `#15191C`; pastelová linie ze šablony `alone` odchází. Písma: Poppins (nadpisy) + Roboto (text), Roboto Slab se vypouští.
+- **Design tokeny jsou hotové** — [docs/11](docs/11-design-tokeny.md). Značku tvoří limetka `#C8DA2B`, modrá `#00B2EF`, oranžová `#F6862F` a uhel `#15191C`. Písma: Poppins (nadpisy) + Roboto (text), self-hosted, Roboto Slab se vypustil.
+- **Paleta zůstala 1:1 včetně pastelové linie**, protože zadáním je věrná rekonstrukce. Tokeny jsou ale dvouvrstvé — přebarvení webu je změna jednoho souboru. Přechod na kontrastní varianty podle [docs/11](docs/11-design-tokeny.md) sekce 2 je otevřený úkol ([docs/13](docs/13-todo.md), bod 11).
+- **Portál debatování je přenesený 1:1** včetně vlastního JS — stojí mimo blokový systém, protože i na starém webu stál mimo šablonu.
+- **Web je dvojjazyčný**: čeština na kořeni, angličtina pod `/en/`, přepínač vlaječkou v hlavičce. Anglicky je zatím úvodní stránka a celé rozhraní — stejný rozsah jako dnes, jen připravený na rozšíření.
 
 ## Rychlé shrnutí analýzy
 

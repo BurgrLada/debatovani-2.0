@@ -1,0 +1,39 @@
+---
+import { Image } from 'astro:assets';
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import type { QuoteBlock } from '../../lib/data';
+
+interface Props { data: QuoteBlock }
+
+const { data } = Astro.props;
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	<figure class="mx-auto max-w-3xl text-center">
+		<blockquote data-tina-field={tinaField(data, 'quote')} class="font-display text-2xl italic leading-snug text-copy">
+			„{data.quote}“
+		</blockquote>
+		<figcaption class="mt-6 flex items-center justify-center gap-4">
+			{data.photo && (
+				<Image src={data.photo} alt="" width={120} height={120} format="webp" class="h-14 w-14 rounded-full object-cover" />
+			)}
+			<div class="text-left">
+				<p class="font-semibold text-subheading">{data.author}</p>
+				{data.role && <p class="text-caption text-muted">{data.role}</p>}
+			</div>
+		</figcaption>
+	</figure>
+</Section>

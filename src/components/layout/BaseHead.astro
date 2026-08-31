@@ -1,0 +1,49 @@
+---
+/*
+ * Fontsource dělí každý řez na podmnožiny znaků. `latin-ext` obsahuje jen
+ * znaky s diakritikou — bez `latin` by se běžná písmena vykreslila náhradním
+ * systémovým fontem a text by byl poskládaný ze dvou písem.
+ */
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
+import '@fontsource/poppins/700.css';
+import '@fontsource-variable/roboto/wght.css';
+import '../../styles/global.css';
+
+import { localizeHref, type Lang } from '../../lib/i18n';
+
+interface Props {
+	title: string;
+	description?: string | null;
+	image?: string | null;
+	noindex?: boolean | null;
+	type?: 'website' | 'article';
+	lang?: Lang;
+}
+
+const { title, description, image, noindex, type = 'website', lang = 'cs' } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = image ? new URL(image, Astro.site) : null;
+---
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{title}</title>
+{description && <meta name="description" content={description} />}
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+<link rel="sitemap" href="/sitemap-index.xml" />
+<link rel="alternate" type="application/rss+xml" title="Aktuality – Asociace debatních klubů" href="/rss.xml" />
+<link rel="alternate" hreflang="cs" href={new URL(localizeHref('/', 'cs'), Astro.site)} />
+<link rel="alternate" hreflang="en" href={new URL(localizeHref('/', 'en'), Astro.site)} />
+<link rel="icon" href="/media/brand/favicon-32.png" sizes="32x32" />
+<link rel="icon" href="/media/brand/favicon-192.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="/media/brand/favicon-192.png" />
+
+<meta property="og:type" content={type} />
+<meta property="og:title" content={title} />
+{description && <meta property="og:description" content={description} />}
+<meta property="og:url" content={canonical} />
+<meta property="og:locale" content={lang === 'en' ? 'en_GB' : 'cs_CZ'} />
+{ogImage && <meta property="og:image" content={ogImage} />}
+<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />

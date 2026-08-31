@@ -1,0 +1,62 @@
+---
+/**
+ * Tlačítko. Varianty odpovídají barvám, které se dnes na webu reálně
+ * používají — web nemá jednu akční barvu (docs/04, otázka 24), takže
+ * varianta je volba redakce, ne odvozená role.
+ */
+import { cn } from '../../lib/cn';
+
+export type ButtonVariant = 'sky' | 'lime' | 'apricot' | 'outline';
+export type ButtonSize = 'sm' | 'md' | 'lg';
+
+interface Props {
+	href?: string | null;
+	variant?: ButtonVariant | null;
+	size?: ButtonSize | null;
+	class?: string;
+	external?: boolean | null;
+}
+
+const { href, variant = 'sky', size = 'md', class: className, external } = Astro.props;
+
+const variants: Record<ButtonVariant, string> = {
+	sky: 'bg-action text-action-ink hover:brightness-95',
+	lime: 'bg-action-alt text-action-alt-ink hover:brightness-95',
+	apricot: 'bg-action-warm text-action-warm-ink hover:brightness-95',
+	outline:
+		'bg-transparent text-copy border border-line hover:bg-surface-alt',
+};
+
+// Rozměry změřené na produkci: tlačítka v obsahu mají odsazení 10px/40px,
+// 16px Roboto a poloměr 3px. `sm` a `lg` jsou odvozené varianty pro místa,
+// kde se plná velikost nevejde.
+const sizes: Record<ButtonSize, string> = {
+	sm: 'px-6 py-2 text-base',
+	md: 'px-10 py-2.5 text-base',
+	lg: 'px-12 py-3.5 text-lg',
+};
+
+const classes = cn(
+	'inline-block rounded-button text-center font-body font-normal leading-normal transition-[filter,background-color] duration-150',
+	variants[variant ?? 'sky'],
+	sizes[size ?? 'md'],
+	className,
+);
+
+// Odkazy mimo web dostávají rel="noopener" — dnešní web to nemá důsledně.
+const isExternal = external ?? (!!href && /^https?:\/\//.test(href) && !href.includes('debatovani.cz'));
+---
+{
+	href ? (
+		<a
+			href={href}
+			class={classes}
+			target={isExternal ? '_blank' : undefined}
+			rel={isExternal ? 'noopener noreferrer' : undefined}
+		>
+			<slot />
+		</a>
+	) : (
+		<button type="button" class={classes}><slot /></button>
+	)
+}

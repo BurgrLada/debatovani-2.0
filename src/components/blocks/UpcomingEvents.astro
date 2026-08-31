@@ -1,0 +1,144 @@
+---
+/**
+ * Výpis nadcházejících akcí z `debata21` API.
+ *
+ * Seznam se vykreslí při buildu, takže funguje bez JS a je ve zdroji stránky
+ * pro vyhledávače. Protože je web statický a akce se mění častěji než se
+ * buildí, skript na klientovi seznam po načtení ještě aktualizuje.
+ */
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import { fetchEvents, formatDateRange, EVENTS_ENDPOINT } from '../../lib/events';
+import { langFromPath, t } from '../../lib/i18n';
+import type { UpcomingEventsBlock } from '../../lib/data';
+
+interface Props { data: UpcomingEventsBlock }
+
+const { data } = Astro.props;
+const lang = langFromPath(Astro.url.pathname);
+const strings = t(lang);
+const limit = data.limit ?? undefined;
+const all = await fetchEvents(lang);
+const events = limit ? all.slice(0, limit) : all;
+const emptyText = data.emptyText || strings.noEvents;
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.title && (
+		<div data-tina-field={tinaField(data, 'title')}>
+			<Heading
+				level={2}
+				size={(data.titleSize as never) ?? 'section'}
+				tone={(data.titleTone as never) ?? 'heading'}
+				align={(data.titleAlign as never) ?? 'center'}
+			>{data.title}</Heading>
+		</div>
+	)}
+	{data.intro && (
+		<p data-tina-field={tinaField(data, 'intro')} class="mx-auto mt-4 max-w-3xl text-center">{data.intro}</p>
+	)}
+
+	<div
+		class="mt-10"
+		data-events-root
+		data-limit={limit ?? ''}
+		data-endpoint={EVENTS_ENDPOINT}
+		data-empty-text={emptyText}
+		data-lang={lang}
+		data-signup={strings.signUp}
+	>
+		{events.length === 0 ? (
+			<p class="text-center text-muted">{emptyText}</p>
+		) : (
+			<ul class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+				{events.map((event) => (
+					<li class="flex h-full flex-col rounded-card border border-line bg-surface p-6">
+						<p class="text-caption font-semibold uppercase tracking-wide text-subheading">
+							{formatDateRange(event.start, event.end)}
+						</p>
+						<h3 class="mt-2 font-display text-xl font-bold text-heading">{event.title}</h3>
+						{event.place && <p class="mt-1 text-muted">{event.place}</p>}
+						<a
+							href={event.url}
+							class="mt-auto pt-5 font-semibold underline underline-offset-2"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{strings.signUp}
+						</a>
+					</li>
+				))}
+			</ul>
+		)}
+	</div>
+</Section>
+
+<script>
+	import { fetchEvents, formatDateRange } from '../../lib/events';
+
+	// Statický build může být starý; po načtení stránky si seznam ověříme.
+	for (const root of document.querySelectorAll<HTMLElement>('[data-events-root]')) {
+		const limitAttr = root.dataset.limit;
+		const limit = limitAttr ? Number(limitAttr) : undefined;
+		const lang = root.dataset.lang ?? 'cs';
+		const signUp = root.dataset.signup ?? 'Přihlásit se';
+
+		fetchEvents(lang).then((all) => {
+			const events = limit ? all.slice(0, limit) : all;
+			if (events.length === 0) {
+				root.innerHTML = `<p class="text-center text-muted"></p>`;
+				root.querySelector('p')!.textContent = root.dataset.emptyText ?? '';
+				return;
+			}
+
+			const list = document.createElement('ul');
+			list.className = 'grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3';
+			for (const event of events) {
+				const item = document.createElement('li');
+				item.className =
+					'flex h-full flex-col rounded-card border border-line bg-surface p-6';
+
+				const date = document.createElement('p');
+				date.className = 'text-caption font-semibold uppercase tracking-wide text-subheading';
+				date.textContent = formatDateRange(event.start, event.end);
+
+				const title = document.createElement('h3');
+				title.className = 'mt-2 font-display text-xl font-bold text-heading';
+				title.textContent = event.title;
+
+				item.append(date, title);
+
+				if (event.place) {
+					const place = document.createElement('p');
+					place.className = 'mt-1 text-muted';
+					place.textContent = event.place;
+					item.append(place);
+				}
+
+				const link = document.createElement('a');
+				link.className = 'mt-auto pt-5 font-semibold underline underline-offset-2';
+				link.href = event.url;
+				link.target = '_blank';
+				link.rel = 'noopener noreferrer';
+				link.textContent = signUp;
+				item.append(link);
+
+				list.append(item);
+			}
+			root.replaceChildren(list);
+		});
+	}
+</script>

@@ -1,0 +1,68 @@
+---
+/**
+ * Nadpis. `level` řídí sémantiku, `size` a `tone` vzhled.
+ *
+ * Na dnešním webu se to rozchází záměrně: „Co je debata?“ je oranžový 45 px
+ * na střed, „Mapa debatních klubů“ limetkový 28 px vlevo a „Můžeme přijet
+ * i k vám!“ modrý 40 px vlevo. Proto jsou velikost, barva i zarovnání
+ * nastavitelné z editoru, ne odvozené z úrovně nadpisu.
+ */
+import { cn } from '../../lib/cn';
+
+export type HeadingSize = 'hero' | 'section' | 'lead' | 'panel' | 'h1' | 'h2' | 'h3' | 'h4';
+export type HeadingTone = 'heading' | 'sub' | 'lime' | 'text' | 'black' | 'inverse';
+
+interface Props {
+	level?: 1 | 2 | 3 | 4 | 5 | 6 | null;
+	size?: HeadingSize | null;
+	tone?: HeadingTone | null;
+	align?: 'left' | 'center' | 'right' | null;
+	uppercase?: boolean | null;
+	class?: string;
+}
+
+const {
+	level = 2,
+	size = 'section',
+	tone = 'heading',
+	align = 'left',
+	uppercase = false,
+	class: className,
+} = Astro.props;
+
+const Tag = `h${level ?? 2}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+
+const sizes: Record<HeadingSize, string> = {
+	hero: 'text-hero font-bold uppercase',
+	section: 'text-section font-bold',
+	lead: 'text-lead font-bold',
+	panel: 'text-panel font-bold',
+	h1: 'text-h1 font-bold',
+	h2: 'text-h2 font-bold',
+	h3: 'text-h3 font-semibold',
+	h4: 'text-h4 font-semibold',
+};
+
+const tones: Record<HeadingTone, string> = {
+	heading: 'text-heading',
+	sub: 'text-subheading',
+	lime: 'text-lime-muted',
+	text: 'text-copy',
+	black: 'text-black',
+	inverse: 'text-inverse',
+};
+
+const aligns = { left: 'text-left', center: 'text-center', right: 'text-right' };
+---
+<Tag
+	class={cn(
+		'font-display leading-[1.25] text-balance',
+		sizes[size ?? 'section'],
+		tones[tone ?? 'heading'],
+		aligns[align ?? 'left'],
+		uppercase && 'uppercase',
+		className,
+	)}
+>
+	<slot />
+</Tag>

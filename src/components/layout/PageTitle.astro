@@ -1,0 +1,25 @@
+---
+/**
+ * Pruh s názvem stránky. Na dnešním webu ho vykresluje šablona nad obsahem
+ * a je jediným H1 většiny stránek — bez něj by měly stránky prázdnou
+ * nadpisovou strukturu.
+ *
+ * Nezobrazuje se u stránek, které začínají hero blokem — ten už svůj H1 má.
+ */
+import Container from '../ui/Container.astro';
+
+interface Props {
+	title?: string | null;
+}
+
+const { title } = Astro.props;
+---
+{title && (
+	<div class="bg-titlebar py-[75px]">
+		<Container>
+			<h1 class="text-center font-display text-pagetitle font-bold uppercase leading-[1.25] text-titlebar-ink">
+				{title}
+			</h1>
+		</Container>
+	</div>
+)}

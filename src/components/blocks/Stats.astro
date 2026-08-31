@@ -1,0 +1,101 @@
+---
+/**
+ * Čísla ze života asociace.
+ *
+ * Dvě rozvržení, obě jsou na dnešním webu: `row` staví čísla vedle sebe
+ * s textem pod nimi, `column` je skládá pod sebe vpravo zarovnaná a text dává
+ * do vedlejšího sloupce — přesně tak vypadá pás „Asociace debatních klubů“.
+ */
+import { tinaField } from '@tinacms/astro/tina-field';
+import TinaMarkdown from '@tinacms/astro/TinaMarkdown.astro';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import Button from '../ui/Button.astro';
+import { mdxComponents } from '../mdx/components';
+import type { StatsBlock } from '../../lib/data';
+
+interface Props { data: StatsBlock }
+
+const { data } = Astro.props;
+const items = (data.items ?? []).filter((i) => i !== null);
+const buttons = (data.buttons ?? []).filter((b) => b !== null);
+const stacked = data.layout === 'column';
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	<div class={stacked ? 'grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] md:items-center' : ''}>
+		<div class={stacked ? '' : 'flex flex-col items-stretch justify-center gap-8 sm:flex-row sm:gap-0'}>
+			{items.map((item, i) => (
+				<>
+					{!stacked && i > 0 && (
+						<div aria-hidden="true" class="hidden w-px self-stretch bg-line sm:block"></div>
+					)}
+					{/* Oddělovač mezi čísly je krátký a zarovnaný vpravo, ne přes celou šířku. */}
+					{stacked && i > 0 && (
+						<hr aria-hidden="true" class="my-6 ms-auto w-[100px] border-0 border-t border-black/60" />
+					)}
+					<div
+						data-tina-field={tinaField(item)}
+						class={stacked ? 'text-right' : 'flex-1 px-6 text-center'}
+					>
+						<p class={`font-display font-bold leading-none ${stacked ? 'text-h1' : 'text-[56px] text-heading'}`}>
+							{item.value}{item.suffix}
+						</p>
+						<p class={`mt-2 ${stacked ? 'text-h4' : ''}`}>{item.label}</p>
+					</div>
+				</>
+			))}
+		</div>
+
+		<div class={stacked ? '' : 'contents'}>
+			{data.eyebrow && (
+				<p data-tina-field={tinaField(data, 'eyebrow')} class={stacked ? 'text-h4' : 'mt-14 text-center text-h4'}>
+					{data.eyebrow}
+				</p>
+			)}
+			{data.title && (
+				<div data-tina-field={tinaField(data, 'title')}>
+					<Heading
+						level={2}
+						size={(data.titleSize as never) ?? 'section'}
+						tone={(data.titleTone as never) ?? 'heading'}
+						align={(data.titleAlign as never) ?? (stacked ? 'left' : 'center')}
+						uppercase={data.titleUppercase}
+						class={stacked ? 'mt-2' : 'mt-14'}
+					>
+						{data.title}
+					</Heading>
+				</div>
+			)}
+			{data.text && (
+				<div
+					data-tina-field={tinaField(data, 'text')}
+					class={`prose-adk mt-4 ${stacked ? '' : 'mx-auto max-w-3xl text-center'}`}
+				>
+					<TinaMarkdown content={data.text} components={mdxComponents} />
+				</div>
+			)}
+			{buttons.length > 0 && (
+				<div class={`mt-8 flex flex-wrap gap-4 ${stacked ? '' : 'justify-center'}`}>
+					{buttons.map((button) => (
+						<div data-tina-field={tinaField(button)}>
+							<Button href={button.href} variant={button.variant as never}>{button.label}</Button>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	</div>
+</Section>

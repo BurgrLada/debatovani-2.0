@@ -1,0 +1,56 @@
+---
+import { Image } from 'astro:assets';
+import { tinaField } from '@tinacms/astro/tina-field';
+import TinaMarkdown from '@tinacms/astro/TinaMarkdown.astro';
+import Container from '../ui/Container.astro';
+import FormattedDate from '../ui/FormattedDate.astro';
+import { mdxComponents } from '../mdx/components';
+import type { CmsArticle } from '../../lib/data';
+
+interface Props { data?: CmsArticle | null }
+
+const { data } = Astro.props;
+const categories = (data?.categories ?? []).filter((c): c is string => !!c);
+---
+{data && (
+	<Container class="max-w-[820px] py-[calc(var(--space-block)*2)]">
+		<FormattedDate date={data.date} class="text-caption text-muted" />
+		<h1
+			data-tina-field={tinaField(data, 'title')}
+			class="mt-2 font-display text-h1 font-bold text-heading"
+		>
+			{data.title}
+		</h1>
+		{data.author && <p class="mt-2 text-caption text-muted">{data.author}</p>}
+
+		{data.cover && (
+			<Image
+				src={data.cover}
+				alt={data.coverAlt ?? ''}
+				width={1200}
+				height={675}
+				format="webp"
+				quality={80}
+				loading="eager"
+				class="mt-8 w-full rounded-card object-cover"
+			/>
+		)}
+
+		{/*
+		  Perex se tady záměrně nevypisuje. U článků z WordPressu je to
+		  automaticky zkrácený začátek textu, takže by se první odstavec
+		  zobrazil dvakrát. Perex slouží výpisům a meta popisu.
+		*/}
+		<div data-tina-field={tinaField(data, 'body')} class="prose-adk mt-8">
+			<TinaMarkdown content={data.body} components={mdxComponents} />
+		</div>
+
+		{categories.length > 0 && (
+			<ul class="mt-10 flex flex-wrap gap-2 border-t border-line pt-6">
+				{categories.map((category) => (
+					<li class="rounded-nav bg-surface-alt px-3 py-1 text-caption">{category}</li>
+				))}
+			</ul>
+		)}
+	</Container>
+)}

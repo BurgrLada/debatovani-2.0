@@ -1,0 +1,49 @@
+---
+import { Icon } from 'astro-icon/components';
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import type { IconListBlock } from '../../lib/data';
+
+interface Props { data: IconListBlock }
+
+const { data } = Astro.props;
+const items = (data.items ?? []).filter((i) => i !== null);
+const columns: Record<string, string> = { '1': '', '2': 'sm:grid-cols-2', '3': 'sm:grid-cols-2 lg:grid-cols-3' };
+const fallbackIcon = data.icon || 'fa6-solid:check';
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.title && (
+		<div data-tina-field={tinaField(data, 'title')}>
+			<Heading
+				level={2}
+				size={(data.titleSize as never) ?? 'section'}
+				tone={(data.titleTone as never) ?? 'heading'}
+				align={(data.titleAlign as never) ?? 'center'} class="mb-8"
+			>{data.title}</Heading>
+		</div>
+	)}
+	<ul class={`grid grid-cols-1 gap-x-8 gap-y-3 ${columns[data.columns ?? '1'] ?? ''}`}>
+		{items.map((item) => (
+			<li data-tina-field={tinaField(item)} class="flex items-start gap-3">
+				<Icon name={item.icon || fallbackIcon} class="mt-1.5 h-4 w-4 shrink-0 text-heading" />
+				<span>
+					{item.href ? <a href={item.href} class="underline underline-offset-2">{item.label}</a> : item.label}
+				</span>
+			</li>
+		))}
+	</ul>
+</Section>

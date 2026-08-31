@@ -1,0 +1,52 @@
+---
+import { tinaField } from '@tinacms/astro/tina-field';
+import TinaMarkdown from '@tinacms/astro/TinaMarkdown.astro';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import { mdxComponents } from '../mdx/components';
+import { cn } from '../../lib/cn';
+import type { RichTextBlock } from '../../lib/data';
+
+interface Props { data: RichTextBlock }
+
+const { data } = Astro.props;
+const aligns = { left: 'text-left', center: 'text-center', right: 'text-right' };
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.title && (
+		<div data-tina-field={tinaField(data, 'title')}>
+			<Heading
+				level={2}
+				size={(data.titleSize as never) ?? 'section'}
+				tone={(data.titleTone as never) ?? 'heading'}
+				align={(data.titleAlign as never) ?? 'center'}
+				class="mb-6"
+			>
+				{data.title}
+			</Heading>
+		</div>
+	)}
+	<div
+		data-tina-field={tinaField(data, 'body')}
+		class={cn(
+			'prose-adk',
+			aligns[(data.align as keyof typeof aligns) ?? 'left'],
+			data.width === 'narrow' && 'mx-auto max-w-[68ch]',
+		)}
+	>
+		<TinaMarkdown content={data.body} components={mdxComponents} />
+	</div>
+</Section>

@@ -1,0 +1,16 @@
+---
+import Container from '../ui/Container.astro';
+import type { DividerBlock } from '../../lib/data';
+
+interface Props { data: DividerBlock }
+
+const { data } = Astro.props;
+const sizes: Record<string, string> = { small: 'py-3', normal: 'py-[var(--space-block)]', large: 'py-14' };
+---
+<div class={sizes[data.size ?? 'normal']}>
+	{data.style !== 'space' && (
+		<Container>
+			<hr class="border-0 border-t border-line" />
+		</Container>
+	)}
+</div>

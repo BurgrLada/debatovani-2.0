@@ -1,0 +1,34 @@
+---
+/**
+ * Únikový poklop pro obsah, na který zatím není blok. Dnešní web má `html`
+ * widget na 66 z 67 stránek, takže bez něj se rekonstrukce neobejde.
+ *
+ * Obsah se vkládá beze změny — schválené zadání (docs/04, otázka 2) počítá
+ * s technicky zdatnou redakcí a širokou volností v editoru.
+ */
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import type { RawHtmlBlock } from '../../lib/data';
+
+interface Props { data: RawHtmlBlock }
+
+const { data } = Astro.props;
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	<div data-tina-field={tinaField(data, 'html')} class="prose-adk">
+		<Fragment set:html={data.html ?? ''} />
+	</div>
+</Section>

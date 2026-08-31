@@ -1,0 +1,168 @@
+---
+/**
+ * Obal sekce stránky. Sjednocuje to, co Elementor řešil na každé sekci zvlášť:
+ * pozadí, šířku, svislé odsazení a pohyb pozadí při scrollování.
+ *
+ * `panel` kreslí pozadí do rámečku uvnitř obsahové šířky místo přes celou
+ * obrazovku, `overlap` sekci zasadí o 100 px do sousedních bloků — přesně tak
+ * je na dnešním webu vsazená sekce s mapou klubů mezi formulář a nabídku kurzů.
+ */
+import Container from './Container.astro';
+import { cn } from '../../lib/cn';
+
+export type SectionBackground = 'none' | 'alt' | 'lime' | 'dark' | 'image';
+
+interface Props {
+	background?: SectionBackground | null;
+	backgroundImage?: string | null;
+	overlay?: boolean | null;
+	overlayTone?: 'dim' | 'navy' | null;
+	textTone?: 'default' | 'black' | 'inverse' | null;
+	parallax?: boolean | null;
+	panel?: boolean | null;
+	overlap?: boolean | null;
+	width?: 'boxed' | 'full' | null;
+	padding?: 'none' | 'normal' | 'large' | 'xl' | null;
+	paddingTop?: 'none' | 'normal' | 'large' | 'xl' | null;
+	paddingBottom?: 'none' | 'normal' | 'large' | 'xl' | null;
+	id?: string | null;
+	class?: string;
+}
+
+const {
+	background = 'none',
+	backgroundImage,
+	overlay = false,
+	overlayTone = 'dim',
+	textTone = 'default',
+	parallax = false,
+	panel = false,
+	overlap = false,
+	width = 'boxed',
+	padding = 'normal',
+	paddingTop,
+	paddingBottom,
+	id,
+	class: className,
+} = Astro.props;
+
+/*
+ * Barva textu se odvozuje od pozadí, ale musí jít přebít: sekce s čísly má
+ * na dnešním webu fotku a přesto černý text, protože je ta fotka světlá.
+ */
+const backgrounds: Record<string, string> = {
+	none: 'bg-surface',
+	alt: 'bg-surface-alt',
+	lime: 'bg-surface-lime',
+	dark: 'bg-surface-dark',
+	image: 'bg-cover bg-center',
+};
+
+const defaultTextTone: Record<string, string> = {
+	none: '',
+	alt: '',
+	lime: '',
+	dark: 'text-inverse',
+	image: 'text-inverse',
+};
+
+const textTones: Record<string, string> = {
+	default: defaultTextTone[background ?? 'none'] ?? '',
+	black: 'text-copy',
+	inverse: 'text-inverse',
+};
+const textClass = textTones[textTone ?? 'default'];
+
+const paddingsTop: Record<string, string> = {
+	none: 'pt-0',
+	normal: 'pt-[var(--space-block)]',
+	large: 'pt-[calc(var(--space-block)*2)]',
+	xl: 'pt-[100px]',
+};
+const paddingsBottom: Record<string, string> = {
+	none: 'pb-0',
+	normal: 'pb-[var(--space-block)]',
+	large: 'pb-[calc(var(--space-block)*2)]',
+	xl: 'pb-[100px]',
+};
+
+// Odstíny odpovídají tomu, co dnešní web reálně používá: jemné ztmavení
+// (černá 25 %) pod hero fotkou a tmavě modrá 70 % pod sekcí s formulářem.
+const overlays = {
+	dim: 'bg-black/25',
+	navy: 'bg-surface-dark/70',
+};
+
+const isImage = background === 'image' && !!backgroundImage;
+const showParallax = !!parallax && isImage;
+const paint = backgrounds[background ?? 'none'];
+
+// U parallaxu kreslí obrázek samostatná vrstva, aby ji šlo zvětšovat bez
+// vlivu na obsah; jinak sedí pozadí přímo na sekci.
+const backgroundStyle = isImage && !showParallax ? `background-image:url('${backgroundImage}')` : undefined;
+const tone = overlays[overlayTone ?? 'dim'];
+
+const spacing = [
+	paddingsTop[paddingTop ?? padding ?? 'normal'],
+	paddingsBottom[paddingBottom ?? padding ?? 'normal'],
+];
+---
+{
+	panel ? (
+		<section
+			id={id ?? undefined}
+			class={cn('relative bg-surface', spacing, overlap && '-my-[100px] z-10', className)}
+		>
+			<Container>
+				<div class={cn('relative overflow-hidden rounded-card px-8 py-12', paint, textClass)} style={backgroundStyle}>
+					{isImage && overlay && <div aria-hidden="true" class={`absolute inset-0 ${tone}`}></div>}
+					<div class="relative"><slot /></div>
+				</div>
+			</Container>
+		</section>
+	) : (
+		<section
+			id={id ?? undefined}
+			class={cn('relative overflow-hidden', paint, textClass, spacing, overlap && '-my-[100px] z-10', className)}
+			style={backgroundStyle}
+		>
+			{showParallax && (
+				<div
+					aria-hidden="true"
+					class="section-parallax absolute inset-0 bg-cover bg-center"
+					style={`background-image:url('${backgroundImage}')`}
+				></div>
+			)}
+			{isImage && overlay && <div aria-hidden="true" class={`absolute inset-0 ${tone}`}></div>}
+			<div class="relative">
+				{width === 'full' ? <slot /> : <Container><slot /></Container>}
+			</div>
+		</section>
+	)
+}
+
+<style>
+	/*
+	 * Pohyb pozadí při scrollování. Dnešní web tu má Elementor „motion effect“,
+	 * který obrázek při průchodu sekce plynule zvětšuje a zase zmenšuje.
+	 * Tady to dělá animace navázaná na scroll — bez JS a bez knihovny.
+	 *
+	 * Kde prohlížeč `animation-timeline` neumí (dnes hlavně Firefox), zůstane
+	 * pozadí statické. Při zapnutém omezení pohybu se nehýbe nikdy.
+	 */
+	@media (prefers-reduced-motion: no-preference) {
+		@supports (animation-timeline: view()) {
+			.section-parallax {
+				animation: section-parallax linear both;
+				animation-timeline: view();
+				animation-range: cover 0% cover 100%;
+			}
+
+			@keyframes section-parallax {
+				0% { transform: scale(1.12); }
+				50% { transform: scale(1); }
+				100% { transform: scale(1.12); }
+			}
+		}
+	}
+</style>

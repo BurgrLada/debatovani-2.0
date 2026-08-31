@@ -1,0 +1,90 @@
+---
+import { tinaField } from '@tinacms/astro/tina-field';
+import Container from '../ui/Container.astro';
+import Button from '../ui/Button.astro';
+import { fetchEvents, formatDateRange } from '../../lib/events';
+import type { HeroBlock } from '../../lib/data';
+
+interface Props { data: HeroBlock }
+
+const { data } = Astro.props;
+const buttons = (data.buttons ?? []).filter((b) => b !== null);
+const centered = data.align === 'center';
+
+/**
+ * Proužek s pozvánkou na nejbližší akci. Dnešní web tady má natvrdo vepsaný
+ * název akce, který někdo musí ručně měnit; tady se doplní z debata21.
+ */
+const nextEvent = data.notice?.useNextEvent ? (await fetchEvents('cs'))[0] : null;
+const noticeHidden = !!data.notice?.useNextEvent && !nextEvent;
+const noticeHref = nextEvent?.url ?? data.notice?.href;
+
+const heights: Record<string, string> = {
+	short: 'min-h-[320px]',
+	medium: 'min-h-[420px]',
+	tall: 'min-h-[560px]',
+};
+const minHeight = heights[data.height ?? 'tall'] ?? heights.tall;
+
+// Hero na dnešním webu zalamuje nadpis ručně; zachováváme to.
+const headlineLines = (data.headline ?? '').split('\n');
+---
+<section
+	id={data.anchor ?? undefined}
+	class={`relative flex ${minHeight} items-center bg-cover bg-center py-[50px]`}
+	style={data.image ? `background-image:url('${data.image}')` : undefined}
+	data-tina-field={tinaField(data, 'image')}
+>
+	{data.overlay !== false && data.image && (
+		<div aria-hidden="true" class="absolute inset-0 bg-black/25"></div>
+	)}
+	<Container class={`relative ${centered ? 'text-center' : ''}`}>
+		{data.eyebrow && (
+			<p data-tina-field={tinaField(data, 'eyebrow')} class="eyebrow mb-[30px] text-inverse">
+				{data.eyebrow}
+			</p>
+		)}
+		{data.headline && (
+			<h1
+				data-tina-field={tinaField(data, 'headline')}
+				class="font-display text-hero font-bold uppercase leading-[1.25] text-inverse"
+			>
+				{headlineLines.map((line, i) => (
+					<>{i > 0 && <br />}{line}</>
+				))}
+			</h1>
+		)}
+		{data.subtitle && (
+			<p
+				data-tina-field={tinaField(data, 'subtitle')}
+				class={`mt-8 max-w-2xl text-lg text-inverse ${centered ? 'mx-auto' : ''}`}
+			>
+				{data.subtitle}
+			</p>
+		)}
+		{buttons.length > 0 && (
+			<div class={`mt-12 flex flex-wrap gap-[30px] md:mt-[116px] ${centered ? 'justify-center' : ''}`}>
+				{buttons.map((button) => (
+					<div data-tina-field={tinaField(button)}>
+						<Button href={button.href} variant={button.variant as never}>{button.label}</Button>
+					</div>
+				))}
+			</div>
+		)}
+		{data.notice?.label && !noticeHidden && (
+			<div class="mt-[30px]" data-tina-field={tinaField(data, 'notice')}>
+				<Button href={noticeHref} variant="apricot" class="text-left">
+					{data.notice.label}
+					{nextEvent && (
+						<>
+							{' '}
+							<strong class="font-semibold">{nextEvent.title}</strong>
+							{' '}
+							<span class="whitespace-nowrap">({formatDateRange(nextEvent.start, nextEvent.end)})</span>
+						</>
+					)}
+				</Button>
+			</div>
+		)}
+	</Container>
+</section>

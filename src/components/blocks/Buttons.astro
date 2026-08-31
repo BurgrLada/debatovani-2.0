@@ -1,0 +1,34 @@
+---
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import Button from '../ui/Button.astro';
+import type { ButtonsBlock } from '../../lib/data';
+
+interface Props { data: ButtonsBlock }
+
+const { data } = Astro.props;
+const items = (data.items ?? []).filter((b) => b !== null);
+const aligns: Record<string, string> = { left: 'justify-start', center: 'justify-center', right: 'justify-end' };
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	<div class={`flex flex-wrap gap-4 ${aligns[data.align ?? 'center']}`}>
+		{items.map((button) => (
+			<div data-tina-field={tinaField(button)}>
+				<Button href={button.href} variant={button.variant as never}>{button.label}</Button>
+			</div>
+		))}
+	</div>
+</Section>

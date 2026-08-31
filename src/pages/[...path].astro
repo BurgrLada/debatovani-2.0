@@ -1,0 +1,34 @@
+---
+/**
+ * Všechny obsahové stránky. Cesta souboru v `src/content/page/cs/` je zároveň
+ * URL, takže se struktura webu dá měnit přesouváním souborů v editoru a
+ * nepotřebuje mapovací tabulku.
+ */
+import Base from '../layouts/Base.astro';
+import TinaIsland from '@tinacms/astro/TinaIsland.astro';
+import PageBody from '../components/islands/PageBody.astro';
+import { getPage, listPages } from '../lib/data';
+import { islands } from '../lib/islands';
+
+export async function getStaticPaths() {
+	const pages = await listPages();
+	return pages
+		.filter((page) => page.path !== 'home')
+		.map((page) => ({ params: { path: page.path } }));
+}
+
+const path = (Astro.params.path ?? '').toString();
+const page = await getPage(path);
+const data = page.data?.page;
+if (!data) return new Response('Not Found', { status: 404 });
+---
+<Base
+	title={data.seo?.title || data.title}
+	description={data.seo?.description}
+	image={data.seo?.image}
+	noindex={data.seo?.noindex}
+>
+	<TinaIsland name="page" wrapper={islands.page.wrapper} params={{ path }} primary>
+		<PageBody data={data} />
+	</TinaIsland>
+</Base>

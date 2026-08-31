@@ -1,0 +1,45 @@
+---
+import { Image } from 'astro:assets';
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import { cn } from '../../lib/cn';
+import type { ImageBlockBlock } from '../../lib/data';
+
+interface Props { data: ImageBlockBlock }
+
+const { data } = Astro.props;
+const sizes: Record<string, string> = { full: 'max-w-full', medium: 'max-w-2xl', small: 'max-w-sm' };
+const aligns: Record<string, string> = { left: 'mr-auto', center: 'mx-auto', right: 'ml-auto' };
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.image && (
+		<figure
+			data-tina-field={tinaField(data, 'image')}
+			class={cn('w-full', sizes[data.size ?? 'full'], aligns[data.align ?? 'center'])}
+		>
+			{data.href ? (
+				<a href={data.href}>
+					<Image src={data.image} alt={data.alt ?? ''} width={1200} height={800} format="webp" quality={82} class="h-auto w-full rounded-card" />
+				</a>
+			) : (
+				<Image src={data.image} alt={data.alt ?? ''} width={1200} height={800} format="webp" quality={82} class="h-auto w-full rounded-card" />
+			)}
+			{data.caption && (
+				<figcaption class="mt-3 text-center text-caption text-muted">{data.caption}</figcaption>
+			)}
+		</figure>
+	)}
+</Section>

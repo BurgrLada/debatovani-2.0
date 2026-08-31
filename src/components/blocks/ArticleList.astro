@@ -1,0 +1,54 @@
+---
+import { tinaField } from '@tinacms/astro/tina-field';
+import Section from '../ui/Section.astro';
+import Heading from '../ui/Heading.astro';
+import Button from '../ui/Button.astro';
+import ArticleCard from '../ui/ArticleCard.astro';
+import { listArticles } from '../../lib/data';
+import { langFromPath, localizeHref, t } from '../../lib/i18n';
+import type { ArticleListBlock } from '../../lib/data';
+
+interface Props { data: ArticleListBlock }
+
+const { data } = Astro.props;
+const lang = langFromPath(Astro.url.pathname);
+const strings = t(lang);
+const all = await listArticles(lang);
+const filtered = data.category
+	? all.filter((article) => (article.categories ?? []).includes(data.category as string))
+	: all;
+const articles = filtered.slice(0, data.limit ?? 3);
+---
+<Section
+	background={data.background as never}
+	backgroundImage={data.backgroundImage}
+	overlay={data.overlay}
+	overlayTone={data.overlayTone as never}
+	parallax={data.parallax}
+	textTone={data.textTone as never}
+	panel={data.panel}
+	overlap={data.overlap}
+	padding={data.padding as never}
+	paddingTop={data.paddingTop as never}
+	paddingBottom={data.paddingBottom as never}
+	id={data.anchor}
+>
+	{data.title && (
+		<div data-tina-field={tinaField(data, 'title')}>
+			<Heading
+				level={2}
+				size={(data.titleSize as never) ?? 'section'}
+				tone={(data.titleTone as never) ?? 'heading'}
+				align={(data.titleAlign as never) ?? 'center'}
+			>{data.title}</Heading>
+		</div>
+	)}
+	<ul class="mt-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+		{articles.map((article) => <li><ArticleCard article={article} /></li>)}
+	</ul>
+	{data.showMore !== false && (
+		<div class="mt-10 text-center">
+			<Button href={localizeHref('/aktuality/', lang)} variant="lime">{strings.allNews}</Button>
+		</div>
+	)}
+</Section>

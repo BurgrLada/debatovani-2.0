@@ -1,0 +1,64 @@
+---
+/**
+ * Rozcestník bloků. Jediné místo, kde se `__typename` z Tiny překládá na
+ * komponentu — přidání bloku znamená řádek v `tina/collections/blocks.ts`,
+ * soubor s komponentou a jednu větev tady.
+ */
+import { tinaField } from '@tinacms/astro/tina-field';
+import type { PageBlock } from '../../lib/data';
+
+import Hero from './Hero.astro';
+import RichText from './RichText.astro';
+import TextWithImage from './TextWithImage.astro';
+import ImageBlock from './ImageBlock.astro';
+import Buttons from './Buttons.astro';
+import IconCards from './IconCards.astro';
+import IconList from './IconList.astro';
+import Stats from './Stats.astro';
+import CardLinks from './CardLinks.astro';
+import Accordion from './Accordion.astro';
+import DocumentList from './DocumentList.astro';
+import PeopleList from './PeopleList.astro';
+import PartnerLogos from './PartnerLogos.astro';
+import ArticleList from './ArticleList.astro';
+import UpcomingEvents from './UpcomingEvents.astro';
+import ClubMap from './ClubMap.astro';
+import ContactForm from './ContactForm.astro';
+import Embed from './Embed.astro';
+import Quote from './Quote.astro';
+import Divider from './Divider.astro';
+import RawHtml from './RawHtml.astro';
+
+interface Props {
+	blocks?: (PageBlock | null)[] | null;
+}
+
+const blocks = (Astro.props.blocks ?? []).filter((block): block is PageBlock => block !== null);
+---
+{
+	blocks.map((block) => (
+		<div data-tina-field={tinaField(block)}>
+			{block.__typename === 'PageBlocksHero' && <Hero data={block} />}
+			{block.__typename === 'PageBlocksRichText' && <RichText data={block} />}
+			{block.__typename === 'PageBlocksTextWithImage' && <TextWithImage data={block} />}
+			{block.__typename === 'PageBlocksImageBlock' && <ImageBlock data={block} />}
+			{block.__typename === 'PageBlocksButtons' && <Buttons data={block} />}
+			{block.__typename === 'PageBlocksIconCards' && <IconCards data={block} />}
+			{block.__typename === 'PageBlocksIconList' && <IconList data={block} />}
+			{block.__typename === 'PageBlocksStats' && <Stats data={block} />}
+			{block.__typename === 'PageBlocksCardLinks' && <CardLinks data={block} />}
+			{block.__typename === 'PageBlocksAccordion' && <Accordion data={block} />}
+			{block.__typename === 'PageBlocksDocumentList' && <DocumentList data={block} />}
+			{block.__typename === 'PageBlocksPeopleList' && <PeopleList data={block} />}
+			{block.__typename === 'PageBlocksPartnerLogos' && <PartnerLogos data={block} />}
+			{block.__typename === 'PageBlocksArticleList' && <ArticleList data={block} />}
+			{block.__typename === 'PageBlocksUpcomingEvents' && <UpcomingEvents data={block} />}
+			{block.__typename === 'PageBlocksClubMap' && <ClubMap data={block} />}
+			{block.__typename === 'PageBlocksContactForm' && <ContactForm data={block} />}
+			{block.__typename === 'PageBlocksEmbed' && <Embed data={block} />}
+			{block.__typename === 'PageBlocksQuote' && <Quote data={block} />}
+			{block.__typename === 'PageBlocksDivider' && <Divider data={block} />}
+			{block.__typename === 'PageBlocksRawHtml' && <RawHtml data={block} />}
+		</div>
+	))
+}
