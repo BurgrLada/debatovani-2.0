@@ -1,4 +1,5 @@
 import type { Collection } from 'tinacms';
+import { localizedRoute } from './routing';
 
 /**
  * Globální nastavení webu — hlavička, navigace, patička, kontakty, SEO.
@@ -11,7 +12,13 @@ export const GlobalCollection: Collection = {
 	label: 'Nastavení webu',
 	path: 'src/content/global',
 	format: 'json',
-	ui: { global: true, allowedActions: { create: false, delete: false } },
+	ui: {
+		global: true,
+		allowedActions: { create: false, delete: false },
+		// Hlavička a patička jsou vidět na každé stránce, takže náhled míří na
+		// úvodní stránku daného jazyka.
+		router: ({ document }) => localizedRoute(document._sys.breadcrumbs, () => '/'),
+	},
 	fields: [
 		{ type: 'string', name: 'siteName', label: 'Název webu', isTitle: true, required: true },
 		{ type: 'image', name: 'logo', label: 'Logo' },

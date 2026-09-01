@@ -22,6 +22,7 @@ if (!data) return new Response('Not Found', { status: 404 });
 	description={data.seo?.description}
 	image={data.seo?.image}
 	noindex={data.seo?.noindex}
+	translatedPath="/"
 >
 	<TinaIsland name="page" wrapper={islands.page.wrapper} params={{ path, lang }} primary>
 		<PageBody data={data} />

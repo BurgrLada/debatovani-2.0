@@ -6,6 +6,9 @@
  *
  * Vlaječku na dnešním webu dolepuje inline skript do menu; tady je součástí
  * navigace, takže funguje i bez JS a čte se ze čtečky obrazovky.
+ *
+ * Přepnutí vede na protějšek stránky, když existuje. Anglická verze je jen
+ * částečná, takže jinde zbývá úvodní stránka — lepší než odkaz na 404.
  */
 import { Image } from 'astro:assets';
 import { tinaField } from '@tinacms/astro/tina-field';
@@ -17,9 +20,11 @@ interface Props {
 	global?: CmsGlobal | null;
 	currentPath?: string;
 	lang?: Lang;
+	/** Cesta bez jazykového prefixu, pokud stránka existuje i v druhém jazyce. */
+	translatedPath?: string | null;
 }
 
-const { global, currentPath = '', lang = 'cs' } = Astro.props;
+const { global, currentPath = '', lang = 'cs', translatedPath = null } = Astro.props;
 const nav = (global?.nav ?? []).filter((item) => item !== null);
 const strings = t(lang);
 const flag = switcher(lang);
@@ -102,7 +107,7 @@ const isCurrent = (href?: string | null) =>
 
 				<li class="flex items-center">
 					<a
-						href={localizeHref('/', flag.to)}
+						href={localizeHref(translatedPath ?? '/', flag.to)}
 						title={strings.switchTo}
 						class="block rounded-nav"
 						hreflang={flag.to}

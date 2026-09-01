@@ -34,7 +34,14 @@ export default defineConfig({
 	output: 'static',
 	adapter: node({ mode: 'standalone' }),
 	redirects,
-	integrations: [mdx(), sitemap(), icon(), tina()],
+	integrations: [
+		mdx(),
+		// Čeština běží na kořeni, angličtina pod `/en/`. Sitemap z toho poskládá
+		// vzájemné `hreflang` odkazy u stránek, které mají obě jazykové verze.
+		sitemap({ i18n: { defaultLocale: 'cs', locales: { cs: 'cs-CZ', en: 'en-GB' } } }),
+		icon(),
+		tina(),
+	],
 	build: { inlineStylesheets: 'always' },
 	image: {
 		layout: 'constrained',

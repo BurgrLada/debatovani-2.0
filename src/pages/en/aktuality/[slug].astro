@@ -1,0 +1,27 @@
+---
+/** Anglické aktuality, `/en/aktuality/<slug>/`. */
+import Base from '../../../layouts/Base.astro';
+import TinaIsland from '@tinacms/astro/TinaIsland.astro';
+import ArticleBody from '../../../components/islands/ArticleBody.astro';
+import { getArticle, listArticles } from '../../../lib/data';
+import { islands } from '../../../lib/islands';
+
+// Jazyk se uvnitř `getStaticPaths` musí psát literálem — Astro tu funkci
+// vytrhne do vlastního modulu, kde proměnné z frontmatteru neexistují.
+const lang = 'en' as const;
+
+export async function getStaticPaths() {
+	const articles = await listArticles('en');
+	return articles.map((article) => ({ params: { slug: article.slug } }));
+}
+
+const slug = (Astro.params.slug ?? '').toString();
+const article = await getArticle(slug, lang);
+const data = article.data?.article;
+if (!data) return new Response('Not Found', { status: 404 });
+---
+<Base title={data.title} description={data.perex} image={data.cover} type="article" lang={lang}>
+	<TinaIsland name="article" wrapper={islands.article.wrapper} params={{ slug, lang }} primary>
+		<ArticleBody data={data} />
+	</TinaIsland>
+</Base>

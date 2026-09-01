@@ -9,15 +9,23 @@ import PageBody from '../../components/islands/PageBody.astro';
 import { getPage, listPages } from '../../lib/data';
 import { islands } from '../../lib/islands';
 
+// Jazyk se uvnitř `getStaticPaths` musí psát literálem — Astro tu funkci
+// vytrhne do vlastního modulu, kde proměnné z frontmatteru neexistují.
 const lang = 'en' as const;
 
 export async function getStaticPaths() {
-	const pages = await listPages('en');
+	const [pages, translated] = await Promise.all([listPages('en'), listPages('cs')]);
+	const czech = new Set(translated.map((page) => page.path));
+
 	return pages
 		.filter((page) => page.path !== 'home')
-		.map((page) => ({ params: { path: page.path } }));
+		.map((page) => ({
+			params: { path: page.path },
+			props: { translatedPath: czech.has(page.path) ? `/${page.path}/` : null },
+		}));
 }
 
+const { translatedPath } = Astro.props;
 const path = (Astro.params.path ?? '').toString();
 const page = await getPage(path, lang);
 const data = page.data?.page;
@@ -29,6 +37,7 @@ if (!data) return new Response('Not Found', { status: 404 });
 	description={data.seo?.description}
 	image={data.seo?.image}
 	noindex={data.seo?.noindex}
+	translatedPath={translatedPath}
 >
 	<TinaIsland name="page" wrapper={islands.page.wrapper} params={{ path, lang }} primary>
 		<PageBody data={data} />

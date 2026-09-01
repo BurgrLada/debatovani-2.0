@@ -52,8 +52,10 @@ export const islands: IslandRegistry = {
 		propsFromData: (data, params) => ({
 			global: (data as QueryResult<GlobalQuery>).data?.global as CmsGlobal | undefined,
 			lang: langParam(params),
-			// Zvýraznění aktivní položky menu se po překreslení nesmí ztratit.
+			// Zvýraznění aktivní položky menu ani cíl jazykového přepínače se
+			// po překreslení nesmí ztratit.
 			currentPath: params.get('path') ?? '',
+			translatedPath: params.get('translated') || null,
 		}),
 	},
 	footer: {

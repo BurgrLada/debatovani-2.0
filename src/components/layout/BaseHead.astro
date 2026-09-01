@@ -11,7 +11,7 @@ import '@fontsource/poppins/700.css';
 import '@fontsource-variable/roboto/wght.css';
 import '../../styles/global.css';
 
-import { localizeHref, type Lang } from '../../lib/i18n';
+import { DEFAULT_LANG, LANGS, localizeHref, t, type Lang } from '../../lib/i18n';
 
 interface Props {
 	title: string;
@@ -20,9 +20,26 @@ interface Props {
 	noindex?: boolean | null;
 	type?: 'website' | 'article';
 	lang?: Lang;
+	/**
+	 * Cesta bez jazykového prefixu, která existuje ve všech jazycích — z ní se
+	 * skládají `hreflang` odkazy. Anglická verze je jen částečná, takže se
+	 * vyplňuje jen u stránek, které protějšek opravdu mají; jinde se žádné
+	 * alternativy nevypisují. Odkazovat naslepo na `/en/` by vyhledávačům
+	 * slíbilo překlad, který neexistuje.
+	 */
+	translatedPath?: string | null;
 }
 
-const { title, description, image, noindex, type = 'website', lang = 'cs' } = Astro.props;
+const {
+	title,
+	description,
+	image,
+	noindex,
+	type = 'website',
+	lang = 'cs',
+	translatedPath = null,
+} = Astro.props;
+const strings = t(lang);
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImage = image ? new URL(image, Astro.site) : null;
 ---
@@ -33,9 +50,15 @@ const ogImage = image ? new URL(image, Astro.site) : null;
 <link rel="canonical" href={canonical} />
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 <link rel="sitemap" href="/sitemap-index.xml" />
-<link rel="alternate" type="application/rss+xml" title="Aktuality – Asociace debatních klubů" href="/rss.xml" />
-<link rel="alternate" hreflang="cs" href={new URL(localizeHref('/', 'cs'), Astro.site)} />
-<link rel="alternate" hreflang="en" href={new URL(localizeHref('/', 'en'), Astro.site)} />
+<link rel="alternate" type="application/rss+xml" title={strings.newsFeedTitle} href={localizeHref('/rss.xml', lang)} />
+{translatedPath && (
+	<>
+		{LANGS.map((code) => (
+			<link rel="alternate" hreflang={code} href={new URL(localizeHref(translatedPath, code), Astro.site)} />
+		))}
+		<link rel="alternate" hreflang="x-default" href={new URL(localizeHref(translatedPath, DEFAULT_LANG), Astro.site)} />
+	</>
+)}
 <link rel="icon" href="/media/brand/favicon-32.png" sizes="32x32" />
 <link rel="icon" href="/media/brand/favicon-192.png" sizes="192x192" />
 <link rel="apple-touch-icon" href="/media/brand/favicon-192.png" />

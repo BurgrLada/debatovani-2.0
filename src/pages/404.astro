@@ -1,18 +1,42 @@
 ---
+/**
+ * Stránka nenalezena.
+ *
+ * Web je statický, takže existuje jediný `404.html` pro obě jazykové větve —
+ * hosting neumí vybrat variantu podle prefixu. Obě znění se proto vykreslí
+ * do stránky a to nesprávné se schová; skript pak podle adresy prohodí, co je
+ * vidět. Bez JS zůstane vidět čeština, což je výchozí jazyk webu.
+ */
 import Base from '../layouts/Base.astro';
 import Container from '../components/ui/Container.astro';
 import Heading from '../components/ui/Heading.astro';
 import Button from '../components/ui/Button.astro';
+import { DEFAULT_LANG, LANGS, localizeHref, t } from '../lib/i18n';
 ---
-<Base title="Stránka nenalezena" noindex>
+<Base title={t(DEFAULT_LANG).notFoundTitle} noindex>
 	<Container class="py-24 text-center">
-		<Heading level={1} size="section" align="center">Tuhle stránku jsme nenašli</Heading>
-		<p class="mx-auto mt-4 max-w-xl">
-			Odkaz je nejspíš starý nebo obsahuje překlep. Zkuste hlavní rozcestník nebo aktuality.
-		</p>
-		<div class="mt-8 flex flex-wrap justify-center gap-4">
-			<Button href="/" variant="lime" size="sm">Na úvodní stránku</Button>
-			<Button href="/aktuality/" variant="sky" size="sm">Aktuality</Button>
-		</div>
+		{LANGS.map((lang) => {
+			const strings = t(lang);
+			return (
+				<div data-not-found={lang} hidden={lang !== DEFAULT_LANG}>
+					<Heading level={1} size="section" align="center">{strings.notFoundTitle}</Heading>
+					<p class="mx-auto mt-4 max-w-xl">{strings.notFoundText}</p>
+					<div class="mt-8 flex flex-wrap justify-center gap-4">
+						<Button href={localizeHref('/', lang)} variant="lime" size="sm">{strings.toHomepage}</Button>
+						<Button href={localizeHref('/aktuality/', lang)} variant="sky" size="sm">{strings.news}</Button>
+					</div>
+				</div>
+			);
+		})}
 	</Container>
 </Base>
+
+<script>
+	import { langFromPath } from '../lib/i18n';
+
+	const lang = langFromPath(location.pathname);
+	document.documentElement.lang = lang;
+	for (const block of document.querySelectorAll<HTMLElement>('[data-not-found]')) {
+		block.hidden = block.dataset.notFound !== lang;
+	}
+</script>

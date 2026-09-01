@@ -14,9 +14,11 @@ interface Props {
 	noindex?: boolean | null;
 	type?: 'website' | 'article';
 	lang?: Lang;
+	/** Cesta bez jazykového prefixu, pokud stránka existuje i v druhém jazyce. */
+	translatedPath?: string | null;
 }
 
-const { title, description, image, noindex, type, lang = 'cs' } = Astro.props;
+const { title, description, image, noindex, type, lang = 'cs', translatedPath } = Astro.props;
 const global = (await getGlobal(lang)).data?.global ?? null;
 const strings = t(lang);
 
@@ -33,6 +35,7 @@ const pageTitle = title
 			noindex={noindex}
 			type={type}
 			lang={lang}
+			translatedPath={translatedPath}
 		/>
 	</head>
 	<body class="flex min-h-screen flex-col">
@@ -50,9 +53,14 @@ const pageTitle = title
 		<TinaIsland
 			name="header"
 			wrapper={islands.header.wrapper}
-			params={{ lang, path: Astro.url.pathname }}
+			params={{ lang, path: Astro.url.pathname, translated: translatedPath ?? '' }}
 		>
-			<Header global={global} currentPath={Astro.url.pathname} lang={lang} />
+			<Header
+				global={global}
+				currentPath={Astro.url.pathname}
+				lang={lang}
+				translatedPath={translatedPath}
+			/>
 		</TinaIsland>
 		<main id="obsah" class="flex-1">
 			<slot />

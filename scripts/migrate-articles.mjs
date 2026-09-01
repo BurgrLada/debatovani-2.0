@@ -22,6 +22,7 @@ import {
 	deobfuscateEmails,
 	normalizeLists,
 	localizeDocuments,
+	detectLang,
 	yamlBlock,
 	yamlString,
 } from './lib/wp.mjs';
@@ -30,7 +31,7 @@ const args = process.argv.slice(2);
 const limit = Number(args[args.indexOf('--limit') + 1]) || Infinity;
 const withMedia = !args.includes('--no-media');
 
-const OUT_DIR = 'src/content/article/cs';
+const OUT_DIR = 'src/content/article';
 const MEDIA_DIR = '/media/aktuality';
 
 const turndown = new TurndownService({
@@ -166,6 +167,7 @@ async function main() {
 	let written = 0;
 	let mediaFailures = 0;
 	const redirects = {};
+	const english = [];
 
 	for (const [index, post] of selected.entries()) {
 		const embedded = post._embedded ?? {};
@@ -220,21 +222,33 @@ async function main() {
 			categories,
 		});
 
-		await writeFileEnsured(`${OUT_DIR}/${post.slug}.mdx`, `${frontmatter}${body}\n`);
+		// Jazyk je první úroveň adresáře, takže se musí rozhodnout tady.
+		// WordPress ho neeviduje — odhaduje se z textu (viz `detectLang`).
+		const lang = detectLang(body);
+		if (lang !== 'cs') english.push(post.slug);
+
+		await writeFileEnsured(`${OUT_DIR}/${lang}/${post.slug}.mdx`, `${frontmatter}${body}\n`);
 		written += 1;
 
 		// Staré URL musí dál fungovat, jinak se ztratí pozice ve vyhledávačích
 		// i odkazy z cizích webů (docs/02, sekce 3).
 		const oldPath = new URL(post.link).pathname;
-		const newPath = `/aktuality/${post.slug}/`;
+		const newPath = lang === 'cs' ? `/aktuality/${post.slug}/` : `/${lang}/aktuality/${post.slug}/`;
 		if (oldPath !== newPath) redirects[oldPath] = newPath;
+
+		// Anglické články měly na starém webu českou adresu bez prefixu a
+		// odkazuje na ni i obsah ostatních článků (`rewritePostLinks`).
+		if (lang !== 'cs') redirects[`/aktuality/${post.slug}/`] = newPath;
 
 		if ((index + 1) % 25 === 0) console.log(`  … ${index + 1}/${selected.length}`);
 	}
 
 	await writeFileEnsured('src/data/redirects.json', `${JSON.stringify(redirects, null, '\t')}\n`);
 
-	console.log(`Hotovo: ${written} článků zapsáno do ${OUT_DIR}.`);
+	console.log(`Hotovo: ${written} článků zapsáno do ${OUT_DIR}/<jazyk>/.`);
+	// Odhad jazyka je heuristika, takže patří pod dohled — po každém běhu je
+	// vidět, co skončilo v angličtině, a dá se to zkontrolovat.
+	console.log(`Vyhodnoceno jako anglické (${english.length}): ${english.join(', ') || '—'}`);
 	console.log(`Přesměrování starých URL: ${Object.keys(redirects).length} → src/data/redirects.json`);
 	if (mediaFailures > 0) console.warn(`Pozor: ${mediaFailures} obrázků se nepodařilo stáhnout.`);
 }

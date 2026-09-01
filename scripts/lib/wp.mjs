@@ -204,3 +204,27 @@ export async function localizeDocuments(markdown, downloadTo = '/media/dokumenty
 
 	return { markdown: result, failed };
 }
+
+/**
+ * Odhad jazyka textu.
+ *
+ * WordPress na produkci jazyk nijak neeviduje — není tam Polylang ani WPML
+ * a anglické články leží ve stejné rubrice jako české. Rozlišit se dají jen
+ * podle textu, a to naštěstí spolehlivě: české články mají 26–84 ‰ znaků
+ * s diakritikou, anglické 0–3 ‰. Práh uprostřed té mezery je bezpečný,
+ * a druhá podmínka (poměr funkčních slov) chrání krátké texty, kde by
+ * samotná diakritika stačit nemusela.
+ */
+const CZECH_DIACRITICS = /[ěščřžýáíéůúňťďóĚŠČŘŽÝÁÍÉŮÚŇŤĎÓ]/g;
+const ENGLISH_WORDS = /\b(the|and|of|will|was|were|their|which|about|with|for)\b/gi;
+const CZECH_WORDS = /\b(a|se|na|v|je|pro|že|které|byl|do|si|nebo)\b/g;
+
+export function detectLang(text) {
+	if (text.length < 200) return 'cs';
+
+	const diacritics = (text.match(CZECH_DIACRITICS) ?? []).length / text.length;
+	const english = (text.match(ENGLISH_WORDS) ?? []).length;
+	const czech = (text.match(CZECH_WORDS) ?? []).length;
+
+	return diacritics < 0.01 && english > czech ? 'en' : 'cs';
+}

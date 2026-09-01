@@ -1,0 +1,35 @@
+---
+/**
+ * Výpis aktualit se stránkováním. Sdílí ho česká routa `/aktuality/` i
+ * anglická `/en/aktuality/` — liší se jen jazykem, ne rozvržením.
+ */
+import type { Page } from 'astro';
+import Container from '../ui/Container.astro';
+import Heading from '../ui/Heading.astro';
+import ArticleCard from '../ui/ArticleCard.astro';
+import { t, type Lang } from '../../lib/i18n';
+import type { ArticleListItem } from '../../lib/data';
+
+interface Props {
+	page: Page<ArticleListItem>;
+	lang: Lang;
+}
+
+const { page, lang } = Astro.props;
+const strings = t(lang);
+---
+<Container class="py-[calc(var(--space-block)*2)]">
+	<Heading level={1} size="section" align="center">{strings.news}</Heading>
+
+	<ul class="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+		{page.data.map((article) => <li><ArticleCard article={article} /></li>)}
+	</ul>
+
+	{page.lastPage > 1 && (
+		<nav aria-label={strings.pagination} class="mt-14 flex items-center justify-center gap-4">
+			{page.url.prev && <a href={page.url.prev} class="font-semibold underline underline-offset-2">{strings.newer}</a>}
+			<span class="text-muted">{strings.pageOf(page.currentPage, page.lastPage)}</span>
+			{page.url.next && <a href={page.url.next} class="font-semibold underline underline-offset-2">{strings.older}</a>}
+		</nav>
+	)}
+</Container>
