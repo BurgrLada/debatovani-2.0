@@ -118,6 +118,15 @@ editovatelné oblasti = jeden záznam v registru.
 (`prerender = false`). Zbytek webu je statické HTML — když Node spadne, web
 běží dál.
 
+Editovatelné jsou tři oblasti: **stránka**, **hlavička** a **patička**.
+Hlavička a patička musí být v `Base.astro` obalené v `<TinaIsland>` — bez toho
+na ně editor neumí navázat formulář a klik na položku menu nebo na patičku
+neudělá nic.
+
+Jejich obal má `display: contents`. Kdyby to byl běžný `div`, rozbil by
+rozvržení: hlavička je `position: sticky` a lepila by se jen uvnitř obalu,
+patička má `mt-auto`, které platí pro přímého potomka flexového `body`.
+
 ## 6. Věrnost produkci
 
 Části, kde bylo potřeba trefit konkrétní rozměry, jsou změřené na živém webu,
@@ -161,16 +170,40 @@ ne odhadnuté:
 Loga partnerů **nejsou v patičce** — na dnešním webu jsou sekcí úvodní stránky
 a v novém webu je vykresluje blok „Loga partnerů“ tamtéž.
 
-### Na co si dát pozor u pohyblivého pozadí
+### Pohyb a efekty
 
-Efekt běží na scroll-driven animaci (`animation-timeline: view()`), takže
-nepotřebuje JavaScript. Ořez sekce musí být `overflow: clip` — a to přesně:
+Dnešní web má na sekcích Elementor animaci `fadeIn`. U nás to dělá
+IntersectionObserver (`src/scripts/reveal.ts`) plus CSS přechod; bloky
+označuje `Blocks.astro` atributem `data-reveal` a úvodní pás se vynechává.
 
-- `overflow: hidden` by ze sekce udělalo scroll kontejner a timeline by
-  přestal být aktivní (animace by se nespustila),
-- `clip-path: inset(0)` ořízne jen vykreslování, ale zvětšená vrstva pozadí
-  dál patří do scrollovatelné oblasti a stránka kvůli ní přetéká doprava,
-- `overflow: clip` ořízne obojí a scroll kontejner nevytváří.
+**Proč ne `animation-timeline: view()`.** Zkoušel jsem to jako první, protože
+by to bylo bez skriptu. Nakonec ne:
+
+- mimo Chromium to zatím nikdo neumí,
+- ani v Chromiu se na to nedá spolehnout — view timeline umí zůstat neaktivní
+  (`timeline.currentTime === null`) a animace se pak nespustí vůbec,
+- zkratka `animation` resetuje `animation-duration` na `0s`, takže animace
+  řízená scrollem rovnou skočí na konec; potřebuje `auto`,
+- `overflow: hidden` na sekci by z ní udělalo scroll kontejner a timeline by
+  přestal být aktivní.
+
+Dohromady moc pastí na efekt, u kterého platí, že když selže, **obsah zůstane
+neviditelný**. Proto pravidla, která je potřeba dodržet:
+
+- **skrytý stav zapíná až skript** třídou `js-reveal` na `<html>`. Bez JS nebo
+  při chybě skriptu je obsah normálně vidět.
+- **pojistka v skriptu**: 1,5 s po načtení se odhalí všechno, co je zrovna
+  vidět, i kdyby observer nedoběhl.
+- **ve vizuálním editoru se neanimuje.** Tina vykresluje stránku v iframu
+  a po každé úpravě překreslí editovanou oblast — nové elementy by původní
+  observer nesledoval a zůstaly by skryté, takže by editor ukazoval prázdnou
+  stránku. Skript proto uvnitř iframu nic neskrývá.
+- **při tisku se odhalí všechno** bez ohledu na to, kam se doscrollovalo.
+- při `prefers-reduced-motion` se nehýbe nic.
+
+Parallax u sekce s formulářem je `background-attachment: fixed`. Není to na
+chlup produkční zoom, ale funguje ve všech prohlížečích a nepotřebuje skript;
+na dotykových zařízeních je vypnutý, tam bývá skokový.
 
 ### Na co si dát pozor u písem
 

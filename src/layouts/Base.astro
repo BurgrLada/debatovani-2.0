@@ -1,8 +1,10 @@
 ---
+import TinaIsland from '@tinacms/astro/TinaIsland.astro';
 import BaseHead from '../components/layout/BaseHead.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import { getGlobal } from '../lib/data';
+import { islands } from '../lib/islands';
 import { t, type Lang } from '../lib/i18n';
 
 interface Props {
@@ -40,11 +42,24 @@ const pageTitle = title
 		>
 			{strings.skipToContent}
 		</a>
-		<Header global={global} currentPath={Astro.url.pathname} lang={lang} />
+		{/*
+		  Hlavička a patička jsou samostatné editovatelné oblasti — bez obalu
+		  `TinaIsland` by na ně editor neuměl navázat formulář a klik na položku
+		  menu nebo na patičku by nic neudělal.
+		*/}
+		<TinaIsland
+			name="header"
+			wrapper={islands.header.wrapper}
+			params={{ lang, path: Astro.url.pathname }}
+		>
+			<Header global={global} currentPath={Astro.url.pathname} lang={lang} />
+		</TinaIsland>
 		<main id="obsah" class="flex-1">
 			<slot />
 		</main>
-		<Footer global={global} />
+		<TinaIsland name="footer" wrapper={islands.footer.wrapper} params={{ lang }}>
+			<Footer global={global} />
+		</TinaIsland>
 		<script src="../scripts/reveal.ts"></script>
 	</body>
 </html>
