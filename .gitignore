@@ -24,6 +24,10 @@ pnpm-debug.log*
 .idea/
 .vscode/
 
+# Pracovní kopie agentů — každá si nese vlastní node_modules a dist.
+# Nastavení v .claude/ se verzovat má, tyhle ne.
+.claude/worktrees/
+
 tmp/
 
 

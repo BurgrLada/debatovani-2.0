@@ -10,7 +10,24 @@
  */
 import type { TinaRichTextContent } from '@tinacms/astro';
 import { requestWithMetadata } from '@tinacms/astro/data';
-import client from '../../tina/__generated__/client';
+import type httpClient from '../../tina/__generated__/client';
+import databaseClient from '../../tina/__generated__/databaseClient';
+
+/**
+ * Obsah se čte přímo z databáze, ne přes HTTP.
+ *
+ * Se self-hosted backendem míří vygenerovaný HTTP klient na `/api/tina/gql`.
+ * Taková adresa dává smysl v prohlížeči, ale ne na serveru: při statickém
+ * buildu i při vykreslování oblastí pro vizuální editaci běží kód v Node,
+ * kde relativní adresa není platná URL — a i kdyby byla, znamenala by, že si
+ * server volá sám sebe kvůli datům, která má vedle sebe.
+ *
+ * `databaseClient` má stejný tvar, jen dotaz vyhodnotí rovnou nad databází
+ * (v produkci MongoDB, při vývoji lokální datalayer). Přetypování je kvůli
+ * tomu, že vygenerovaný soubor je `@ts-nocheck` — typy se proto berou
+ * z HTTP klienta, kde jsou odvozené ze schématu.
+ */
+const client = databaseClient as unknown as typeof httpClient;
 
 export { DEFAULT_LANG } from './i18n';
 import { DEFAULT_LANG } from './i18n';

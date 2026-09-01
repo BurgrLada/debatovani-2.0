@@ -1,5 +1,7 @@
 import type { Collection } from 'tinacms';
 import { pageBlocks } from './blocks';
+import { DEFAULT_LANG } from '../../src/lib/i18n';
+import { localizedRoute } from './routing';
 
 /** Projekty — důležité kvůli povinné publicitě grantů. */
 export const ProjectCollection: Collection = {
@@ -8,7 +10,11 @@ export const ProjectCollection: Collection = {
 	path: 'src/content/project',
 	format: 'mdx',
 	ui: {
-		router: ({ document }) => `/projekty/${document._sys.filename}/`,
+		// Projekty vycházejí jen česky — anglická routa neexistuje.
+		router: ({ document }) =>
+			localizedRoute(document._sys.breadcrumbs, (slug) => `/projekty/${slug}/`, [
+				DEFAULT_LANG,
+			]),
 	},
 	fields: [
 		{ type: 'string', name: 'title', label: 'Název projektu', isTitle: true, required: true },

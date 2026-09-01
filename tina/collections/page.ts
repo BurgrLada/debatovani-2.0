@@ -1,5 +1,6 @@
 import type { Collection } from 'tinacms';
 import { pageBlocks } from './blocks';
+import { localizedRoute } from './routing';
 
 /**
  * Obsahové stránky.
@@ -14,10 +15,10 @@ export const PageCollection: Collection = {
 	path: 'src/content/page',
 	format: 'mdx',
 	ui: {
-		router: ({ document }) => {
-			const path = document._sys.breadcrumbs.slice(1).join('/');
-			return path === 'home' ? '/' : `/${path}/`;
-		},
+		router: ({ document }) =>
+			localizedRoute(document._sys.breadcrumbs, (path) =>
+				path === 'home' ? '/' : `/${path}/`,
+			),
 	},
 	fields: [
 		{

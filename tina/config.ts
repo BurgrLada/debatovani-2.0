@@ -1,4 +1,5 @@
-import { defineConfig } from 'tinacms';
+import { defineConfig, LocalAuthProvider } from 'tinacms';
+import { GoogleWorkspaceAuthProvider } from './auth-provider';
 import { PageCollection } from './collections/page';
 import { ArticleCollection } from './collections/article';
 import { ProjectCollection } from './collections/project';
@@ -13,15 +14,23 @@ const branch =
 	process.env.HEAD ||
 	'main';
 
+/**
+ * Lokální režim (`pnpm dev`): obsah se čte a zapisuje přímo v pracovní kopii,
+ * bez databáze a bez přihlašování. Ve všech ostatních případech běží
+ * self-hosted backend — `src/pages/api/tina/[...routes].ts` a `database.ts`.
+ */
+const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
+
 export default defineConfig({
 	branch,
 
-	// Bez těchto proměnných běží Tina v lokálním režimu (`tinacms dev`):
-	// obsah čte a zapisuje přímo do gitu, bez cloudu a bez databáze.
-	// Self-hosted backend (GitHub OAuth + index) přijde na řadu při nasazení
-	// — viz docs/06, sekce 6.
-	clientId: process.env.PUBLIC_TINA_CLIENT_ID,
-	token: process.env.TINA_TOKEN,
+	// Obsah se neukládá do Tina Cloudu, ale přes vlastní backend v tomhle
+	// projektu — administrace tedy nemluví s ničím cizím. Platí to i při
+	// vývoji, aby se lokálně jezdilo po stejné cestě jako v produkci.
+	// Serverový kód tuhle adresu nepoužívá, ten čte databázi přímo
+	// (`src/lib/data.ts`).
+	contentApiUrlOverride: '/api/tina/gql',
+	authProvider: isLocal ? new LocalAuthProvider() : new GoogleWorkspaceAuthProvider(),
 
 	build: { outputFolder: 'admin', publicFolder: 'public' },
 

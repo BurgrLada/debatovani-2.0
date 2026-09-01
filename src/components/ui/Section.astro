@@ -4,8 +4,15 @@
  * pozadí, šířku, svislé odsazení a pohyb pozadí při scrollování.
  *
  * `panel` kreslí pozadí do rámečku uvnitř obsahové šířky místo přes celou
- * obrazovku, `overlap` sekci zasadí o 100 px do sousedních bloků — přesně tak
- * je na dnešním webu vsazená sekce s mapou klubů mezi formulář a nabídku kurzů.
+ * obrazovku, `overlap` sekci zasadí do sousedních bloků — přesně tak je na
+ * dnešním webu vsazená sekce s mapou klubů mezi formulář a nabídku kurzů.
+ *
+ * Zanoření je změřené na produkci (`.elementor-element-bddcbb7`): sekce má
+ * `margin: -100px 0` a **žádné vlastní pozadí**, takže v překryvu prosvítá
+ * fotka nad ní a limetkový pás pod ní; barvu nese až karta uvnitř. Karta sedí
+ * 15 px pod horní a nad dolní hranou sekce (na produkci to dělá odsazení
+ * Elementor sloupce), takže do souseda ukousne 85 px a obsahu souseda zbyde
+ * 15 px vzduchu. Sousedé si těch 100 px kompenzují odsazením `xl`.
  */
 import Container from './Container.astro';
 import { cn } from '../../lib/cn';
@@ -111,10 +118,23 @@ const spacing = [
 	panel ? (
 		<section
 			id={id ?? undefined}
-			class={cn('relative bg-surface', spacing, overlap && '-my-[100px] z-10', className)}
+			class={cn(
+				'relative',
+				overlap
+					? 'z-10 -my-[var(--space-overlap)] py-[15px]'
+					: ['bg-surface', spacing],
+				className,
+			)}
 		>
 			<Container>
-				<div class={cn('relative overflow-hidden rounded-card px-8 py-12', paint, textClass)} style={backgroundStyle}>
+				<div
+					class={cn(
+						'relative overflow-hidden rounded-card px-6 py-10 md:px-[45px] md:py-[50px]',
+						paint,
+						textClass,
+					)}
+					style={backgroundStyle}
+				>
 					{isImage && overlay && <div aria-hidden="true" class={`absolute inset-0 ${tone}`}></div>}
 					<div class="relative"><slot /></div>
 				</div>
@@ -123,7 +143,7 @@ const spacing = [
 	) : (
 		<section
 			id={id ?? undefined}
-			class={cn('relative overflow-hidden', paint, textClass, spacing, overlap && '-my-[100px] z-10', className)}
+			class={cn('relative overflow-hidden', paint, textClass, spacing, overlap && '-my-[var(--space-overlap)] z-10', className)}
 			style={backgroundStyle}
 		>
 			{showParallax && (

@@ -16,9 +16,13 @@ a Tina server skončí s ním. V takovém případě spusťte `pnpm exec tinacms
 a `pnpm exec astro dev --background` zvlášť.
 
 ```bash
-pnpm build    # produkční build
-pnpm check    # kontrola typů
+pnpm build        # produkční build (self-hosted: MongoDB + zápis přes GitHub API)
+pnpm build:local  # build z lokálních souborů, bez databáze
+pnpm check        # kontrola typů
 ```
+
+`pnpm build` potřebuje proměnné podle [.env.example](.env.example) — režim
+a přihlašovací údaje popisuje [docs/14](docs/14-autentizace.md).
 
 Migrace z WordPressu (opakovatelná, pouští se znovu před spuštěním):
 
@@ -46,6 +50,7 @@ node scripts/migrate-pages.mjs
 | [docs/11-design-tokeny.md](docs/11-design-tokeny.md) | **Design tokeny** — paleta a typografie změřená z loga a stávajícího webu, oddělení značky od šablony |
 | [docs/12-implementace.md](docs/12-implementace.md) | **Implementace** — co je hotové, struktura projektu, jak přidat blok, na co si dát pozor |
 | [docs/13-todo.md](docs/13-todo.md) | **Co zbývá** — seřazené podle toho, co blokuje spuštění |
+| [docs/14-autentizace.md](docs/14-autentizace.md) | **Přihlašování do administrace** — Google Workspace přes better-auth, kdo smí dovnitř, co nastavit |
 
 ## Rozhodnutá architektura
 
@@ -53,11 +58,11 @@ node scripts/migrate-pages.mjs
 
 - Web je **statické HTML** (`output: 'static'` + adaptér), servírované z cache.
 - Administrace běží jako **`prerender = false` routy uvnitř téhož projektu** — `/admin` a `/api/tina/*` obsluhuje Node proces. Když spadne, web běží dál.
-- Obsah je v **gitu** (Markdown/MDX + JSON), Postgres drží jen index. Média v S3-kompatibilním úložišti.
+- Obsah je v **gitu** (Markdown/MDX + JSON), MongoDB drží jen index. Média v S3-kompatibilním úložišti.
 - Bloky jsou **`.astro` komponenty se Zod schématem** — editor je jen nadstavba, která do nich sype data.
 - **Rozdělení administrace do samostatné služby je varianta do budoucna**, ne výchozí stav. Sáhne se po ní, až začne vadit redeploy uprostřed editace, kolize React verzí (Puck) nebo sdílené prostředí s přístupovými údaji. Migrace je levná, proto se neřeší dopředu.
 - **Inicializace: nejdřív Astro, pak `@tinacms/cli init`** — ne `create-tina-app`. Detaily a pořadí kroků v [docs/06](docs/06-doporucena-architektura.md), sekce 4.
-- **GitHub Actions** spouští buildy, **GitHub OAuth** přihlašuje do administrace, média na **Cloudflare R2**.
+- **GitHub Actions** spouští buildy, do administrace se chodí **účtem Google Workspace** (better-auth, jen doména `debatovani.cz`), média na **Cloudflare R2**. Podrobnosti v [docs/14](docs/14-autentizace.md).
 - **Adresářová konvence pro jazyky od začátku** (`content/<kolekce>/<jazyk>/…`), i když se o rozsahu anglické verze rozhodne později.
 - **Portál debatování je rozšíření** — obsahový model ani routing hlavního webu se od něj neodvozují.
 - **Design tokeny jsou hotové** — [docs/11](docs/11-design-tokeny.md). Značku tvoří limetka `#C8DA2B`, modrá `#00B2EF`, oranžová `#F6862F` a uhel `#15191C`. Písma: Poppins (nadpisy) + Roboto (text), self-hosted, Roboto Slab se vypustil.

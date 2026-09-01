@@ -126,8 +126,9 @@
   /* Jediná svislá mezera, kterou dnešní web používá — viz docs/11 sekce 5. */
   --space-block: 30px;
   /* O kolik se zanořená sekce překrývá se sousedy (blok „Zasadit do
-   * sousedních sekcí“). Sousedé musí mít aspoň tohle odsazení. */
-  --space-overlap: 60px;
+   * sousedních sekcí“). Změřeno na produkci — sousedé musí mít aspoň tohle
+   * odsazení na přiléhající straně (`paddingTop`/`paddingBottom: xl`). */
+  --space-overlap: 100px;
   --header-height: 118px;
 }
 

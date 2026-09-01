@@ -7,11 +7,12 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "tinacms dev -c \"astro dev\"",
-    "build": "tinacms build --local --skip-cloud-checks -c \"astro build\"",
+    "dev": "TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"astro dev\"",
+    "build": "tinacms build -c \"astro build\"",
+    "build:local": "TINA_PUBLIC_IS_LOCAL=true tinacms build --local --skip-cloud-checks -c \"astro build\"",
     "preview": "astro preview",
     "check": "astro check",
-    "tina:build": "tinacms build --local --skip-cloud-checks",
+    "tina:build": "TINA_PUBLIC_IS_LOCAL=true tinacms build --local --skip-cloud-checks",
     "migrate:articles": "node scripts/migrate-articles.mjs",
     "migrate:pages": "node scripts/migrate-pages.mjs",
     "migrate:media": "node scripts/fetch-media.mjs",
@@ -22,6 +23,7 @@
     "@astrojs/node": "^11.1.4",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
+    "@better-auth/mongo-adapter": "^1.7.2",
     "@fontsource-variable/roboto": "^5.2.10",
     "@fontsource/poppins": "^5.2.8",
     "@iconify-json/fa6-brands": "^1.2.6",
@@ -29,12 +31,17 @@
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "@tinacms/astro": "^0.6.1",
+    "@tinacms/datalayer": "^2.0.29",
     "astro": "^7.2.9",
     "astro-icon": "^1.2.0",
+    "better-auth": "^1.7.2",
     "clsx": "^2.1.1",
+    "mongodb": "^7.6.0",
+    "mongodb-level": "^0.0.4",
     "sharp": "^0.35.4",
     "tailwind-merge": "^3.6.0",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "tinacms-gitprovider-github": "^4.1.16"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",

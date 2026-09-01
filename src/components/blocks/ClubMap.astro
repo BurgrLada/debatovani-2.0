@@ -87,7 +87,7 @@ const regions = [...byRegion.entries()].sort(([a], [b]) => a.localeCompare(b, 'c
 	paddingBottom={data.paddingBottom as never}
 	id={data.anchor}
 >
-	<div class={cn('flex flex-col gap-8', !fullWidth && 'md:flex-row md:items-center', imageFirst && 'md:flex-row-reverse')}>
+	<div class={cn('flex flex-col gap-[30px]', !fullWidth && 'md:flex-row md:items-center', imageFirst && 'md:flex-row-reverse')}>
 		{!fullWidth && (
 			<div class={cn('w-full', textWidth)}>
 				{data.title && (

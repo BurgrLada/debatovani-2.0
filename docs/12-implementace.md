@@ -147,7 +147,9 @@ ne odhadnuté:
   ne pevná vlastnost komponenty
 - sekce s mapou má béžové pozadí jen kolem obsahu (`panel`) a je zanořená do
   sekcí nad a pod sebou (`overlap`, `z-index: 9`); hloubka zanoření je token
-  `--space-overlap` a sousedé si ten prostor kompenzují odsazením
+  `--space-overlap` a sousedé si ten prostor kompenzují odsazením. Sama sekce
+  **nemá pozadí** — v překryvu prosvítá fotka nad ní i limetkový pás pod ní,
+  barvu nese až karta uvnitř
 - sekce s formulářem má „motion effect“: obrázek na pozadí se během průchodu
   obrazovkou zmenšuje ze 118 % na 100 %
 - čísla mají dvě rozvržení: vedle sebe s textem pod nimi, nebo pod sebou
@@ -157,8 +159,13 @@ ne odhadnuté:
   jeho barvu textu
 - sekce s formulářem má na pozadí pohyb (Elementor „motion effect“, který
   obrázek při průchodu zvětšuje) — u nás animace navázaná na scroll, bez JS
-- sekce s mapou je zasazená o 100 px do sousedních bloků (`overlap`), proto
-  mají sousedé odsazení 100 px na přiléhající straně
+- sekce s mapou je zasazená o 100 px do sousedních bloků (`overlap`,
+  `margin: -100px 0`), proto mají sousedé odsazení 100 px na přiléhající
+  straně (`paddingBottom` / `paddingTop: xl`). Karta sedí 15 px pod horní
+  a nad dolní hranou sekce, takže do souseda reálně ukousne 85 px a obsahu
+  souseda zbyde 15 px vzduchu — změřeno na `.elementor-element-bddcbb7`.
+  Vnitřní odsazení karty je 50 px svisle a 45 px vodorovně (na produkci
+  30 px karta + 15 px sloupec), mezera mezi sloupci 30 px
 - oddělovače mezi čísly jsou krátké (100 px) a zarovnané vpravo, ne přes
   celou šířku
 - barva textu v sekci jde přebít (`textTone`): sekce s čísly má fotku na

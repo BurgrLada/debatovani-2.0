@@ -26,9 +26,19 @@ Souvisí s [04-otazky.md](04-otazky.md) otázkou 15 — mají přihlášky zůst
 Google Forms?
 
 ### 2. Self-hosted Tina backend
-Teď běží lokální režim: obsah v gitu, žádná autentizace. Před nasazením je
-potřeba doplnit GitHub OAuth, index (Postgres) a `/api/tina/*` routy — postup je
-v [06-doporucena-architektura.md](06-doporucena-architektura.md), sekce 6.
+**Hotovo v kódu, zbývá nasadit.** Administrace se přihlašuje účtem Google
+Workspace přes better-auth, obsah commituje GitHub API, index je v MongoDB
+a `/api/tina/*` obsluhuje Node proces. Popis a zdůvodnění je
+v [14-autentizace.md](14-autentizace.md).
+
+Před spuštěním zbývá:
+
+- založit OAuth klienta v Google Cloudu (consent screen **Internal**)
+  a vyplnit proměnné podle [.env.example](../.env.example),
+- postavit MongoDB a rozhodnout o zálohách indexu,
+- vytvořit servisní GitHub token pro zápis obsahu,
+- projít celý přihlašovací tok se skutečnými údaji — zatím je ověřené jen
+  to, co jde ověřit bez nich (viz sekce 5 v [14-autentizace.md](14-autentizace.md)).
 
 ### 3. Ověřit přesměrování na produkci
 `src/data/redirects.json` má 356 záznamů a `astro.config.mjs` je předává Astru.

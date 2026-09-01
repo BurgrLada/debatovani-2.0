@@ -1,4 +1,6 @@
 import type { Collection } from 'tinacms';
+import { DEFAULT_LANG } from '../../src/lib/i18n';
+import { localizedRoute } from './routing';
 
 /** Aktuality — 356 článků migrovaných z WordPressu. */
 export const ArticleCollection: Collection = {
@@ -8,7 +10,11 @@ export const ArticleCollection: Collection = {
 	format: 'mdx',
 	defaultItem: () => ({ date: new Date().toISOString() }),
 	ui: {
-		router: ({ document }) => `/aktuality/${document._sys.filename}/`,
+		// Aktuality zatím vycházejí jen česky — anglická routa neexistuje.
+		router: ({ document }) =>
+			localizedRoute(document._sys.breadcrumbs, (slug) => `/aktuality/${slug}/`, [
+				DEFAULT_LANG,
+			]),
 		filename: {
 			// Slug drží staré URL, aby po přechodu neztratily platnost odkazy
 			// a pozice ve vyhledávačích.
