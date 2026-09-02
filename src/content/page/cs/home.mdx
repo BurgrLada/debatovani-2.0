@@ -2,11 +2,9 @@
 title: Úvodní stránka
 seo:
   title: Asociace debatních klubů z.s. – Debatování
-  description: >-
-    Vzděláváme žáky základních a středních škol celosvětově rozšířenou metodou
-    soutěžní debaty. Učíme nejen mluvit, ale i přemýšlet.
+  description: 'Vzděláváme žáky základních a středních škol celosvětově rozšířenou metodou soutěžní debaty. Učíme nejen mluvit, ale i přemýšlet.'
 blocks:
-  - eyebrow: Jsme Asociace debatních klubů
+  - eyebrow: Jsme Asociace debatních klubů!
     headline: |-
       Učíme nejen mluvit,
       ale i přemýšlet.
@@ -30,7 +28,6 @@ blocks:
       label: 'Přihlaste se na nejbližší událost:'
       useNextEvent: true
     _template: hero
-
   - title: Co je debata?
     body: |
       Debata je pravidly řízená diskuze dvou týmů nad důležitým společenským
@@ -50,7 +47,6 @@ blocks:
     background: none
     padding: large
     _template: textWithImage
-
   - title: Proč debatovat?
     intro: |
       Debatování dlouhodobě a systematicky pomáhá mladým lidem rozvíjet se
@@ -102,21 +98,11 @@ blocks:
     background: none
     padding: large
     _template: iconCards
-
   - title: Chcete se zapojit?
     titleTone: inverse
     titleSize: lead
     titleAlign: left
     intro: Napište nám!
-    submitLabel: Odeslat
-    anchor: zapoj-se
-    background: image
-    backgroundImage: /media/home/zapojte-se.webp
-    overlay: true
-    overlayTone: navy
-    parallax: true
-    padding: large
-    paddingBottom: xl
     fields:
       - label: Jsem…
         name: role
@@ -135,8 +121,16 @@ blocks:
       - label: Napište nám
         name: zprava
         type: textarea
+    submitLabel: Odeslat
+    background: image
+    backgroundImage: /media/home/zapojte-se.webp
+    overlay: true
+    overlayTone: navy
+    parallax: true
+    padding: large
+    paddingBottom: xl
+    anchor: zapoj-se
     _template: contactForm
-
   - title: Mapa debatních klubů
     titleTone: lime
     titleSize: panel
@@ -144,6 +138,10 @@ blocks:
     body: |
       Do programů ADK jsou zapojeny střední i základní školy z celé ČR. Hledáte
       nejbližší debatní klub? Nahlédněte do naší mapy debatních klubů!
+    buttons:
+      - label: Nejbližší kluby
+        href: /kontakt/mapa-debatnich-klubu/
+        variant: lime
     image: /media/home/mapa.webp
     showMarkers: true
     bounds:
@@ -151,19 +149,14 @@ blocks:
       east: 19.25
       south: 48.3
       north: 51.3
-    showList: false
     imagePosition: right
     imageWidth: two-thirds
-    buttons:
-      - label: Nejbližší kluby
-        href: /kontakt/mapa-debatnich-klubu/
-        variant: lime
+    showList: false
     background: alt
     panel: true
     overlap: true
     padding: none
     _template: clubMap
-
   - title: Můžeme přijet i k vám!
     titleTone: sub
     titleSize: lead
@@ -184,21 +177,10 @@ blocks:
     padding: large
     paddingTop: xl
     _template: textWithImage
-
-  - eyebrow: Učíme přemýšlet debatou
-    title: Asociace debatních klubů
+  - title: Asociace debatních klubů
     titleTone: text
     titleAlign: left
-    titleUppercase: true
-    layout: column
-    textTone: black
-    items:
-      - value: '628'
-        label: debat za školní rok
-      - value: '400'
-        label: členů ADK
-      - value: '44'
-        label: debatních klubů
+    eyebrow: Učíme přemýšlet debatou
     text: |
       Jsme nezisková organizace, která vzdělává žáky základních a středních škol
       celosvětově rozšířenou metodou soutěžní debaty.
@@ -206,6 +188,15 @@ blocks:
       Žákům středních škol jsou určeny naše programy Debatní liga a její obdoba
       Debate League probíhající v anglickém jazyce, žákům základních škol je
       určena soutěž Debatiáda.
+    layout: column
+    titleUppercase: true
+    items:
+      - value: '628'
+        label: debat za školní rok
+      - value: '400'
+        label: členů ADK
+      - value: '44'
+        label: debatních klubů
     buttons:
       - label: O nás
         href: /o-nas/
@@ -213,12 +204,10 @@ blocks:
     background: image
     backgroundImage: /media/home/cisla.jpg
     overlay: false
+    textTone: black
     padding: large
     _template: stats
-
-  - title: 'Naši partneři'
-    background: none
-    padding: large
+  - title: Naši partneři
     items:
       - logo: /media/partners/sp_education.svg
         name: EDUCATION.cz
@@ -244,5 +233,8 @@ blocks:
       - logo: /media/partners/sp_msmt.svg
         name: MŠMT
         href: 'https://www.msmt.cz/'
+    background: none
+    padding: large
     _template: partnerLogos
 ---
+
