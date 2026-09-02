@@ -18,10 +18,11 @@
  * V lokálním režimu (`TINA_PUBLIC_IS_LOCAL=true`) nic z toho neplatí: obsah
  * se čte a zapisuje přímo v pracovní kopii a index běží v paměti.
  */
-import { createDatabase, createLocalDatabase } from '@tinacms/datalayer';
+import { createDatabase, createLocalDatabase, type GitProvider } from '@tinacms/datalayer';
 import { GitHubProvider } from 'tinacms-gitprovider-github';
 import { SqliteLevel } from 'sqlite-level';
 import { indexPath } from '../src/lib/db';
+import { commitMessage } from '../src/lib/editor';
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
 
@@ -41,15 +42,37 @@ function requireEnv(name: string): string {
 	return value;
 }
 
+/**
+ * Git provider, jehož zpráva commitu nese podpis přihlášeného redaktora.
+ *
+ * `GitHubProvider` bere `commitMessage` v konstruktoru, takže by pro všechny
+ * commity byla stejná. Přepisovat ji na sdílené instanci před každým zápisem
+ * nejde bezpečně — mezi nastavením a použitím je `await`, takže by si dva
+ * souběžné požadavky mohly podpisy prohodit. Vyrábí se proto instance na
+ * operaci; je to jen obal nad Octokitem, vedle síťových volání kolem to nic
+ * nestojí.
+ */
+function signedGitProvider(): GitProvider {
+	const options = {
+		owner: requireEnv('GITHUB_OWNER'),
+		repo: requireEnv('GITHUB_REPO'),
+		token: requireEnv('GITHUB_PERSONAL_ACCESS_TOKEN'),
+		branch,
+	};
+
+	const forMessage = (summary: string) =>
+		new GitHubProvider({ ...options, commitMessage: commitMessage(summary) });
+
+	return {
+		onPut: (key, value) => forMessage(`obsah: úprava ${key}`).onPut(key, value),
+		onDelete: (key) => forMessage(`obsah: smazání ${key}`).onDelete(key),
+	};
+}
+
 export default isLocal
 	? createLocalDatabase()
 	: createDatabase({
-			gitProvider: new GitHubProvider({
-				owner: requireEnv('GITHUB_OWNER'),
-				repo: requireEnv('GITHUB_REPO'),
-				token: requireEnv('GITHUB_PERSONAL_ACCESS_TOKEN'),
-				branch,
-			}),
+			gitProvider: signedGitProvider(),
 			databaseAdapter: new SqliteLevel<string, Record<string, any>>({
 				filename: indexPath(branch),
 			}),

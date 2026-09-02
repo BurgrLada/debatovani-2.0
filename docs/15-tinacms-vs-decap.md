@@ -115,7 +115,7 @@ Editor o téhle vazbě ale **neví vůbec nic** — vidí jen dvě složky. Důs
 | **Pro** | žádná omezení: různé slugy, obsah existující jen v jednom jazyce, přidání jazyka = nová složka |
 | **Proti** | žádné souběžné editování, žádný přehled „co ještě není přeložené“, snadné rozejití obou verzí |
 
-Ten druhý sloupec není teoretický. Otevřený bod v [13-todo.md](13-todo.md) (12) — anglická navigace v `global/en/global.json` pořád odkazuje na české stránky — je přesně chyba, na kterou by skutečná i18n funkce upozornila.
+Ten druhý sloupec není teoretický. Otevřený bod v [13-todo.md](13-todo.md) (13) — anglická navigace v `global/en/global.json` pořád odkazuje na české stránky — je přesně chyba, na kterou by skutečná i18n funkce upozornila.
 
 ### Jak by to fungovalo v Decapu
 
@@ -138,7 +138,7 @@ Shrnuto: Decap by dal lepší editaci tam, kde překlady opravdu existují (str�
 
 ### Co by se tím reálně zlepšilo
 
-Jedna konkrétní věc, a stojí za zmínku: **bylo by vidět, co chybí.** Prázdná anglická záložka je viditelná; chybějící soubor v `en/` není. Při rozšiřování anglické verze (otevřená otázka v [13-todo.md](13-todo.md), bod 10) je to rozdíl mezi „projdu seznam“ a „ručně porovnám dva adresáře“.
+Jedna konkrétní věc, a stojí za zmínku: **bylo by vidět, co chybí.** Prázdná anglická záložka je viditelná; chybějící soubor v `en/` není. Při rozšiřování anglické verze (otevřená otázka v [13-todo.md](13-todo.md), bod 11) je to rozdíl mezi „projdu seznam“ a „ručně porovnám dva adresáře“.
 
 Sveltia je v tomhle ještě dál — kromě jazykových záložek nabízí i strojový překlad polí (DeepL), takže založení anglické verze stránky je klik a pak korektura. Pokud by se anglická verze měla opravdu rozrůst, je tohle silnější argument než cokoli jiného v téhle úvaze.
 

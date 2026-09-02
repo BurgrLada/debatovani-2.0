@@ -1,0 +1,22 @@
+# Do image patří zdroj a obsah, ne to, co z něj vznikne nebo co je lokální.
+node_modules
+dist
+.data
+.git
+.astro
+.claude
+.vscode
+.idea
+tmp
+
+# Přihlašovací údaje se předávají prostředím, ne souborem v image.
+.env
+.env.production
+
+# Vygenerované Tinou při buildu uvnitř image.
+tina/__generated__
+public/admin
+
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store

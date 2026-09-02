@@ -19,8 +19,8 @@ import {
 	type BackendAuthProvider,
 } from '@tinacms/datalayer';
 import databaseClient from '../../../../tina/__generated__/databaseClient';
-import { ensureAuthSchema, getAuth } from '../../../lib/auth';
-import { denyAccess } from '../../../lib/access';
+import { authorizeEditor } from '../../../lib/auth';
+import { runWithEditor, setEditor } from '../../../lib/editor';
 
 export const prerender = false;
 
@@ -34,36 +34,23 @@ const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
  */
 const BetterAuthBackend = (): BackendAuthProvider => ({
 	isAuthorized: async (req) => {
-		await ensureAuthSchema();
+		const headers = new Headers(req.headers as Record<string, string>);
+		const auth = await authorizeEditor(headers);
 
-		const session = await getAuth().api.getSession({
-			headers: new Headers(req.headers as Record<string, string>),
-		});
-
-		if (!session) {
+		if (!auth.ok) {
 			return {
 				isAuthorized: false,
-				errorCode: 401,
-				errorMessage: 'Nepřihlášeno.',
-			};
-		}
-
-		const denial = denyAccess(session.user.email, session.user.emailVerified);
-
-		if (denial) {
-			console.warn(`[tina] Odmítnutý požadavek: ${denial.reason}`);
-
-			return {
-				isAuthorized: false,
-				errorCode: 403,
-				errorMessage: 'Tenhle účet nemá přístup do administrace webu.',
+				errorCode: auth.status,
+				errorMessage: auth.message,
 			};
 		}
 
 		// Tina předá uživatele dál do GraphQL vrstvy.
-		(req as IncomingMessage & { session?: unknown }).session = {
-			user: { name: session.user.name, email: session.user.email },
-		};
+		(req as IncomingMessage & { session?: unknown }).session = { user: auth.editor };
+
+		// A tudy do zprávy commitu: `tina/database.ts` si redaktora vyzvedne
+		// z kontextu, který kolem celé obsluhy otevírá `runWithEditor()` níž.
+		setEditor(auth.editor);
 
 		return { isAuthorized: true };
 	},
@@ -112,7 +99,9 @@ export const ALL: APIRoute = async ({ request, url }) => {
 		},
 	};
 
-	await handler(req, res as unknown as ServerResponse);
+	// Kontext se otevře prázdný — kdo požadavek poslal, se zjistí až uvnitř
+	// handleru v `isAuthorized`, které do něj redaktora doplní.
+	await runWithEditor(() => handler(req, res as unknown as ServerResponse));
 	await done;
 
 	return new Response(chunks.join(''), {

@@ -45,13 +45,42 @@ Před spuštěním zbývá:
 - **ověřit `better-sqlite3` v cílovém image** — prebuilt pro Node 24 existuje
   a lokálně se stáhne, ale na Alpine (musl) není a chtěl by toolchain.
 
-### 3. Ověřit přesměrování na produkci
+### 3. Knihovna médií
+**Hotovo v kódu, ověřené lokálně.** Self-hosted TinaCMS knihovnu médií
+nedodává — `@tinacms/datalayer` žádný media handler nemá a administrace
+hlásila „Repo-based media isn't available when self-hosting“. Bez toho
+redakce nemůže nahrát obrázek ani dokument, což je blokující.
+
+**Rozhodnuto: média zůstávají v gitu.** Externí úložiště (Cloudflare R2,
+MinIO) se zvažovalo — [06-doporucena-architektura.md](06-doporucena-architektura.md),
+otázka 2 — ale git má média replikovaná v každém klonu a nikdo je nemusí
+zálohovat zvlášť. Cenou je velikost repozitáře (291 MB v 531 souborech).
+
+Chybějící půlku dodává projekt sám:
+
+- `src/lib/media.ts` — práce se soubory; lokálně v pracovní kopii, jinak
+  přes GitHub API stejnou cestou jako obsah,
+- `src/pages/api/media/[...path].ts` — `list`, `raw`, `upload`, `delete`
+  za přihlášením,
+- `tina/media-store.ts` — `MediaStore` napojený přes `media.loadCustomStore`.
+
+Před spuštěním zbývá:
+
+- **projít nahrání a smazání proti skutečnému GitHub tokenu.** Lokální režim
+  je ověřený (výpis, náhled, nahrání s diakritikou v názvu, smazání, odmítnutí
+  cesty ven z kořene); cesta přes GitHub API zatím ne,
+- **rozmyslet commity.** Každý nahraný soubor je vlastní commit, a commit
+  spouští build. Deset obrázků za sebou znamená deset buildů. Pokud to bude
+  vadit, řešením je dávkovat nahrávání přes Git Trees API — zatím to není
+  napsané, protože se neví, jestli to vadí.
+
+### 4. Ověřit přesměrování na produkci
 `src/data/redirects.json` má 356 záznamů a `astro.config.mjs` je předává Astru.
 Node adaptér je obsluhuje jako 301. Pokud se statické HTML bude servírovat
 z cache před Node procesem, musí přesměrování umět i ta vrstva (nginx `map`,
 Cloudflare Rules) — jinak staré odkazy skončí na 404.
 
-### 4. Doběhnout migraci těsně před přepnutím
+### 5. Doběhnout migraci těsně před přepnutím
 Redakce publikuje dál. Skripty jsou opakovatelné, takže se pustí znovu:
 
 ```bash
@@ -61,7 +90,7 @@ node scripts/migrate-pages.mjs      # bez --force, ruční úpravy se nepřepí�
 
 ## B. Obsah k doplnění
 
-### 5. Debatní kluby
+### 6. Debatní kluby
 V `src/content/club/cs/` jsou 4 vzorové záznamy. Reálná data existují jen
 v Google My Maps — export KML a doplnit (44 klubů podle homepage). Viz
 [04-otazky.md](04-otazky.md), otázka 13.
@@ -72,18 +101,18 @@ na mapě neobjeví. Až budou kluby kompletní, dá se na
 `/kontakt/mapa-debatnich-klubu/` vypnout vložená Google My Maps a nechat
 vlastní mapu.
 
-### 6. Projekty jako kolekce
+### 7. Projekty jako kolekce
 Kolekce `project` je hotová, ale 12 projektů zatím zůstalo jako běžné stránky
 pod `/projekty/`. Převod dá strukturovaná data (donor, období, stav), což je
 užitečné pro povinnou publicitu grantů.
 
-### 7. Stránky převedené jako jeden textový blok
+### 8. Stránky převedené jako jeden textový blok
 27 stránek nebylo v Elementoru — migrace z nich udělala jeden textový blok.
 Obsah je celý, ale struktura chybí. Rozdělit do bloků se vyplatí u těch
 navštěvovanějších: `historie`, `podporte-nas`, `projekty`, `cile-programu`,
 `infoweb-pro-rozhodci`, `rozhodci`.
 
-### 8. Chybějící obrázky
+### 9. Chybějící obrázky
 8 obrázků je i na dnešním WordPressu smazaných (HTTP 404) a v migrovaném obsahu
 zůstávají odkazy na původní adresy. Buď dohledat originály, nebo odkazy
 z článků odstranit:
@@ -94,14 +123,14 @@ z článků odstranit:
 2021/05/webinar_23, 2021/07/kalendar-pridat, 2021/08/nadace-posty@2x
 ```
 
-### 9. Vlastní HTML k projití
+### 10. Vlastní HTML k projití
 Stránka `mapa-debatnich-klubu` měla vlastní HTML/JS z Elementoru; mapa už je
 převedená na blok `Mapa debatních klubů`. U ostatních stránek zkontrolovat, jestli
 někde nezůstal blok „Vlastní HTML“ se skriptem, který se dá nahradit blokem.
 
 ## C. Otevřená rozhodnutí
 
-### 10. Rozsah anglické verze
+### 11. Rozsah anglické verze
 Infrastruktura je hotová: routing `/en/`, přepínač vlaječkou v hlavičce,
 anglická navigace a patička, přeložené popisky rozhraní (`src/lib/i18n.ts`)
 a anglická úvodní stránka. Stejně jako na dnešním webu je ale anglicky jen
@@ -113,7 +142,7 @@ a routa ho sama zveřejní. Otevřené je taky, co s 31 anglickými články
 v rubrice Debate League: dnes leží v české kolekci a ve výpisu `/aktuality/`
 se míchají s českými.
 
-### 11. Přístupnost palety
+### 12. Přístupnost palety
 Zadání bylo rekonstruovat vzhled 1:1, takže web převzal i dnešní kontrastní
 problémy — limetka má na bílé kontrast 1,55 : 1, modrá 2,44 : 1, oranžová
 2,51 : 1. WCAG AA vyžaduje 4,5 : 1.
@@ -123,25 +152,25 @@ varianty. Přepnutí je změna palety v `src/styles/tokens.css` — komponenty s
 nesahají. **Doporučuji to udělat**, je to jedna z mála věcí, kde se dnešní stav
 dá zlepšit bez přepisování obsahu.
 
-### 12. Anglické popisky nad rámec rozhraní
+### 13. Anglické popisky nad rámec rozhraní
 `src/lib/i18n.ts` překládá popisky, které nejsou obsahem (tlačítka výpisů,
 stránkování, hlášky formuláře). Texty spravované v CMS — názvy stránek,
 bloky, aktuality — se překládají obsahem, ne kódem. Až přibudou další anglické
 stránky, je potřeba projít i navigaci v `src/content/global/en/global.json`:
 teď odkazuje na české stránky, protože anglické zatím neexistují.
 
-### 13. Tailwind play CDN na portálu
+### 14. Tailwind play CDN na portálu
 `src/pages/portal/index.astro` používá `cdn.tailwindcss.com`, protože byl
 přenesený 1:1 a jeho třídy jsou psané proti Tailwindu 3. Play CDN není určené
 pro produkci. Až se portál bude upravovat, převést třídy na projektový Tailwind
 — pozor na rozdíly v3 → v4, hlavně `rounded` a `shadow`.
 
-### 14. Analytika a cookie lišta
+### 15. Analytika a cookie lišta
 Migrace nepřenesla Google Tag Manager. Písma jsou self-hosted, takže web zatím
 neposílá nic ven a cookie lištu nepotřebuje. Pokud má GA4 zůstat, přibude
 i lišta ([04-otazky.md](04-otazky.md), otázka 22).
 
-### 15. Osud dalších subdomén
+### 16. Osud dalších subdomén
 `elearning.debatovani.cz` vrací HTTP 500 a v navigaci na něj vede odkaz.
 `pds.debatovani.cz` je v menu taky. Ani jedno není součástí tohoto repozitáře
 ([04-otazky.md](04-otazky.md), otázky 7 a 9).

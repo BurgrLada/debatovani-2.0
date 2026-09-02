@@ -34,13 +34,15 @@ export default defineConfig({
 
 	build: { outputFolder: 'admin', publicFolder: 'public' },
 
+	// Média jdou do gitu vedle obsahu. 1 377 souborů z WordPressu se
+	// nepřenáší celé — migruje se jen to, na co obsah opravdu odkazuje.
+	//
+	// `media.tina` tady být nemůže: to je úložiště obsluhované TinaCloudem
+	// a self-hosted režim k němu nemá jak přistoupit („Repo-based media isn't
+	// available when self-hosting“). Vlastní store čte a zapisuje tytéž
+	// soubory přes `/api/media/*` — viz `tina/media-store.ts`.
 	media: {
-		tina: {
-			// Média jdou do gitu vedle obsahu. 1 377 souborů z WordPressu se
-			// nepřenáší celé — migruje se jen to, na co obsah opravdu odkazuje.
-			mediaRoot: 'media',
-			publicFolder: 'public',
-		},
+		loadCustomStore: async () => (await import('./media-store')).GitMediaStore,
 	},
 
 	schema: {

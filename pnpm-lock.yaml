@@ -71,6 +71,9 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
+      tinacms:
+        specifier: ^3.12.1
+        version: 3.12.1(@types/node@24.13.3)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(abstract-level@1.0.4)(immer@10.2.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.6.0(react@19.2.8))
       tinacms-gitprovider-github:
         specifier: ^4.1.16
         version: 4.1.16(@tinacms/datalayer@2.0.29(react@19.2.8))
@@ -99,9 +102,6 @@ importers:
       react-dom:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
-      tinacms:
-        specifier: ^3.12.1
-        version: 3.12.1(@types/node@24.13.3)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(abstract-level@1.0.4)(immer@10.2.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.6.0(react@19.2.8))
       turndown:
         specifier: ^7.2.4
         version: 7.2.4

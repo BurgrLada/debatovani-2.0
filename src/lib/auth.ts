@@ -22,6 +22,7 @@ import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { APIError } from 'better-auth/api';
 import { allowedDomain, denyAccess } from './access';
 import { getAuthDb } from './db';
+import type { Editor } from './editor';
 
 function requireEnv(name: string): string {
 	const value = process.env[name];
@@ -104,6 +105,46 @@ export function getAuth() {
 	auth ??= createAuth();
 
 	return auth;
+}
+
+export type EditorDenial = { status: number; message: string };
+
+export type EditorAuth =
+	| { ok: true; editor: Editor }
+	| ({ ok: false } & EditorDenial);
+
+/**
+ * Ověří, že požadavek nese relaci redaktora, který smí do administrace,
+ * a vrátí, kdo to je — podpis pak jde do zprávy commitu (`src/lib/editor.ts`).
+ *
+ * Sdílí to Tina API (`src/pages/api/tina/[...routes].ts`) i knihovna médií
+ * (`src/pages/api/media/[...path].ts`). Kontrola allowlistu se opakuje při
+ * každém požadavku — účet už může mít rozběhnutou relaci, ale mezitím
+ * vypadnout z `AUTH_ALLOWED_EMAILS`; bez toho by odebrání ze seznamu
+ * zabralo až vypršením relace.
+ */
+export async function authorizeEditor(headers: Headers): Promise<EditorAuth> {
+	await ensureAuthSchema();
+
+	const session = await getAuth().api.getSession({ headers });
+
+	if (!session) {
+		return { ok: false, status: 401, message: 'Nepřihlášeno.' };
+	}
+
+	const denial = denyAccess(session.user.email, session.user.emailVerified);
+
+	if (denial) {
+		console.warn(`[auth] Odmítnutý požadavek: ${denial.reason}`);
+
+		return {
+			ok: false,
+			status: 403,
+			message: 'Tenhle účet nemá přístup do administrace webu.',
+		};
+	}
+
+	return { ok: true, editor: { name: session.user.name, email: session.user.email } };
 }
 
 let schemaReady: Promise<void> | undefined;

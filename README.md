@@ -53,6 +53,7 @@ node scripts/migrate-pages.mjs
 | [docs/14-autentizace.md](docs/14-autentizace.md) | **Přihlašování do administrace** — Google Workspace přes better-auth, kdo smí dovnitř, co nastavit |
 | [docs/15-tinacms-vs-decap.md](docs/15-tinacms-vs-decap.md) | **TinaCMS vs. Decap** — zpětné ověření volby proti hotové implementaci: co by odchod ušetřil, co by stál |
 | [docs/16-migrace-sqlite.md](docs/16-migrace-sqlite.md) | **Migrace na SQLite** — odchod od MongoDB k jedinému Node procesu: postup, ověření, nasazení |
+| [docs/17-nasazeni-coolify.md](docs/17-nasazeni-coolify.md) | **Nasazení na Coolify** — Dockerfile, proměnné, persistentní volume, na co si dát pozor |
 
 ## Rozhodnutá architektura
 
@@ -60,15 +61,15 @@ node scripts/migrate-pages.mjs
 
 - Web je **statické HTML** (`output: 'static'` + adaptér), servírované z cache.
 - Administrace běží jako **`prerender = false` routy uvnitř téhož projektu** — `/admin` a `/api/tina/*` obsluhuje Node proces. Když spadne, web běží dál.
-- Obsah je v **gitu** (Markdown/MDX + JSON), index je SQLite soubor vedle procesu — **databázový server projekt nemá**. Média v S3-kompatibilním úložišti.
+- Obsah je v **gitu** (Markdown/MDX + JSON), index je SQLite soubor vedle procesu — **databázový server projekt nemá**. Média jsou v gitu taky, přes vlastní knihovnu (`src/lib/media.ts`), protože self-hosted Tina žádnou nedodává.
 - Bloky jsou **`.astro` komponenty se Zod schématem** — editor je jen nadstavba, která do nich sype data.
 - **Rozdělení administrace do samostatné služby je varianta do budoucna**, ne výchozí stav. Sáhne se po ní, až začne vadit redeploy uprostřed editace, kolize React verzí (Puck) nebo sdílené prostředí s přístupovými údaji. Migrace je levná, proto se neřeší dopředu.
 - **Inicializace: nejdřív Astro, pak `@tinacms/cli init`** — ne `create-tina-app`. Detaily a pořadí kroků v [docs/06](docs/06-doporucena-architektura.md), sekce 4.
-- **GitHub Actions** spouští buildy, do administrace se chodí **účtem Google Workspace** (better-auth, jen doména `debatovani.cz`), média na **Cloudflare R2**. Podrobnosti v [docs/14](docs/14-autentizace.md).
+- **GitHub Actions** spouští buildy, do administrace se chodí **účtem Google Workspace** (better-auth, jen doména `debatovani.cz`), média zůstávají **v gitu** ([docs/06](docs/06-doporucena-architektura.md), otázka 2). Podrobnosti v [docs/14](docs/14-autentizace.md).
 - **Adresářová konvence pro jazyky od začátku** (`content/<kolekce>/<jazyk>/…`), i když se o rozsahu anglické verze rozhodne později.
 - **Portál debatování je rozšíření** — obsahový model ani routing hlavního webu se od něj neodvozují.
 - **Design tokeny jsou hotové** — [docs/11](docs/11-design-tokeny.md). Značku tvoří limetka `#C8DA2B`, modrá `#00B2EF`, oranžová `#F6862F` a uhel `#15191C`. Písma: Poppins (nadpisy) + Roboto (text), self-hosted, Roboto Slab se vypustil.
-- **Paleta zůstala 1:1 včetně pastelové linie**, protože zadáním je věrná rekonstrukce. Tokeny jsou ale dvouvrstvé — přebarvení webu je změna jednoho souboru. Přechod na kontrastní varianty podle [docs/11](docs/11-design-tokeny.md) sekce 2 je otevřený úkol ([docs/13](docs/13-todo.md), bod 11).
+- **Paleta zůstala 1:1 včetně pastelové linie**, protože zadáním je věrná rekonstrukce. Tokeny jsou ale dvouvrstvé — přebarvení webu je změna jednoho souboru. Přechod na kontrastní varianty podle [docs/11](docs/11-design-tokeny.md) sekce 2 je otevřený úkol ([docs/13](docs/13-todo.md), bod 12).
 - **Portál debatování je přenesený 1:1** včetně vlastního JS — stojí mimo blokový systém, protože i na starém webu stál mimo šablonu.
 - **Web je dvojjazyčný**: čeština na kořeni, angličtina pod `/en/`, přepínač vlaječkou v hlavičce. Anglicky je zatím úvodní stránka a celé rozhraní — stejný rozsah jako dnes, jen připravený na rozšíření.
 

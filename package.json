@@ -15,7 +15,6 @@
     "tina:build": "TINA_PUBLIC_IS_LOCAL=true tinacms build --local --skip-cloud-checks",
     "migrate:articles": "node scripts/migrate-articles.mjs",
     "migrate:pages": "node scripts/migrate-pages.mjs",
-    "migrate:media": "node scripts/fetch-media.mjs",
     "auth:migrate": "node scripts/auth-migrate.mjs",
     "index:checkpoint": "node scripts/index-checkpoint.mjs",
     "astro": "astro"
@@ -42,6 +41,7 @@
     "sqlite-level": "^2.1.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.3",
+    "tinacms": "^3.12.1",
     "tinacms-gitprovider-github": "^4.1.16"
   },
   "devDependencies": {
@@ -53,7 +53,6 @@
     "cheerio": "^1.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "tinacms": "^3.12.1",
     "turndown": "^7.2.4",
     "typescript": "^6.0.3"
   },
