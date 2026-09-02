@@ -22,8 +22,8 @@ import databaseClient from '../../tina/__generated__/databaseClient';
  * kde relativní adresa není platná URL — a i kdyby byla, znamenala by, že si
  * server volá sám sebe kvůli datům, která má vedle sebe.
  *
- * `databaseClient` má stejný tvar, jen dotaz vyhodnotí rovnou nad databází
- * (v produkci MongoDB, při vývoji lokální datalayer). Přetypování je kvůli
+ * `databaseClient` má stejný tvar, jen dotaz vyhodnotí rovnou nad indexem
+ * (v produkci soubor SQLite, při vývoji lokální datalayer). Přetypování je kvůli
  * tomu, že vygenerovaný soubor je `@ts-nocheck` — typy se proto berou
  * z HTTP klienta, kde jsou odvozené ze schématu.
  */

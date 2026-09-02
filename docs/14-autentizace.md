@@ -60,25 +60,40 @@ nic z toho, co je hotové, se kvůli tomu nepřepisuje.
 
 Vzor je v [.env.example](../.env.example). Kromě přihlašovacích údajů
 Googlu je potřeba `BETTER_AUTH_SECRET` (`openssl rand -base64 32`),
-připojení k MongoDB a token pro zápis do gitu.
+`DATA_DIR` (adresář se SQLite soubory) a token pro zápis do gitu.
 
 **Serverový kód čte `process.env`, ne `import.meta.env`** — druhé jmenované
 se při buildu nahrazuje staticky a přihlašovací údaje by skončily zapečené
 v sestaveném souboru. V produkci proměnné dodá systemd nebo kontejner, při
 vývoji je z `.env` načte `src/lib/env.ts`.
 
-### MongoDB
+### Úložiště
 
-Jedna databáze slouží obojímu: **indexu obsahu pro Tinu** i **účtům
-a relacím**. Obsah samotný v ní není — ten zůstává v gitu, takže ztráta
-databáze znamená přeindexování a odhlášení, ne ztrátu dat.
+Databázový server projekt nemá — k provozu stačí tenhle jediný Node proces.
+Obojí, co si administrace pamatuje, leží v `DATA_DIR` jako SQLite soubor
+(`src/lib/db.ts`):
+
+| Soubor | Co drží | Když se ztratí |
+|---|---|---|
+| `index-<větev>.sqlite` | index obsahu pro Tinu (`sqlite-level`) | přeindexuje se z gitu při dalším buildu |
+| `auth.sqlite` | účty a relace better-authu | redakce se odhlásí, účty vzniknou znovu |
+
+Obsah v žádném z nich není — ten zůstává v gitu.
 
 Postgres, se kterým počítala [06-doporucena-architektura.md](06-doporucena-architektura.md),
 použít nejde: Tina bere jako index libovolnou implementaci `abstract-level`
-a hotová je pro **MongoDB nebo Redis**, ne pro Postgres.
+a Postgres mezi nimi není. MongoDB, se kterou počítala první verze téhle
+kapitoly, použít jde — ale je to databázový server navíc, takže ji nahradil
+soubor. Rozbor je v [15-tinacms-vs-decap.md](15-tinacms-vs-decap.md) sekci 9,
+postup v [16-migrace-sqlite.md](16-migrace-sqlite.md).
 
-Transakce vyžadují replica set. Samostatně běžící MongoDB je neumí, proto se
-zapínají výslovně přes `MONGODB_TRANSACTIONS`.
+Schéma pro účty si better-auth vytvoří sám při prvním požadavku na
+přihlášení (`ensureAuthSchema()` v `src/lib/auth.ts`); ručně jde totéž
+spustit přes `pnpm auth:migrate`. Transakce se narozdíl od samostatně
+běžící MongoDB zapínat nemusí — better-auth je nad SQLite zapne sám.
+
+**V produkci musí `DATA_DIR` ležet na persistentním volume.** Na
+ephemerálním kontejneru by přihlášení nepřežilo restart.
 
 ## 4. Jak to do sebe zapadá
 
@@ -89,9 +104,11 @@ prohlížeč                       Node proces                     vně
 (statická SPA, veřejná)         better-auth                     (ověří účet a doménu)
                                      │
                                      ▼
-                                 MongoDB ◄─── relace, účty
+                             auth.sqlite ◄─── relace, účty
+                                     
+                       index-<větev>.sqlite ◄─── index obsahu
                                      ▲
-                                     │ index obsahu
+                                     │
 /admin ── dotazy na obsah ────► /api/tina/*  ─────────────────► GitHub API
                                 TinaNodeBackend                 (zápis obsahu)
                                 (ověří relaci a allowlist)
@@ -121,12 +138,17 @@ Ověřené proti skutečnému OAuth klientovi (1. 9. 2026):
 
 - **Přihlášení projde celé** — od `/admin` přes Google až po funkční
   administraci. Účet vznikl v databázi s `emailVerified: true`, napojený na
-  `providerId: "google"`.
-- Tina API **bez relace i s podvrženou cookie vrací 401**.
+  `providerId: "google"`. _Ověřeno ještě proti MongoDB; po přechodu na SQLite
+  se to musí zopakovat se skutečným OAuth klientem._
+- Tina API **bez relace i s podvrženou cookie vrací 401**. _Přeověřeno nad
+  SQLite 2. 9. 2026 proti sestavenému serveru._
 - Allowlist odmítá všechny zkoušené varianty cizích adres, včetně adresy,
   kde je povolená doména jen předponou (`…@debatovani.cz.zly.cz`).
-- Self-hosted build proběhne celý: obsah se naindexuje do MongoDB a statický
-  web se vygeneruje.
+- Self-hosted build proběhne celý: obsah se naindexuje do `index-main.sqlite`
+  a statický web se vygeneruje. _Přeověřeno 2. 9. 2026: 453 HTML souborů,
+  obsahově shodných s buildem ze souborů._
+- **Schéma `auth.sqlite` vzniká samo** při prvním požadavku na `/api/auth/*`
+  a `getMigrations()` je idempotentní — druhý běh nedělá nic.
 
 Zatím neověřené:
 

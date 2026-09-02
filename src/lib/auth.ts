@@ -18,11 +18,10 @@
  * být nemusí, proto instance vzniká líně přes `getAuth()`.
  */
 import './env';
-import { betterAuth } from 'better-auth';
+import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { APIError } from 'better-auth/api';
-import { mongodbAdapter } from '@better-auth/mongo-adapter';
 import { allowedDomain, denyAccess } from './access';
-import { getMongo, mongoTransactionsEnabled } from './mongo';
+import { getAuthDb } from './db';
 
 function requireEnv(name: string): string {
 	const value = process.env[name];
@@ -34,18 +33,22 @@ function requireEnv(name: string): string {
 	return value;
 }
 
-function createAuth() {
-	const { client, db } = getMongo();
-
-	return betterAuth({
+/**
+ * Konfigurace na jednom místě, protože ji potřebují dva: `betterAuth()` níž
+ * a `getMigrations()` v `ensureAuthSchema()`. Návratový typ je uvedený
+ * výslovně — bez něj se odvodí z literálu a `betterAuth()` pak neuzná
+ * databázový adaptér.
+ */
+function authOptions(): BetterAuthOptions {
+	return {
 		baseURL: process.env.BETTER_AUTH_URL ?? process.env.SITE_URL ?? 'http://localhost:4321',
 		secret: requireEnv('BETTER_AUTH_SECRET'),
 		basePath: '/api/auth',
 
-		database: mongodbAdapter(db, {
-			client,
-			transaction: mongoTransactionsEnabled(),
-		}),
+		// Instance `better-sqlite3` se předává rovnou. better-auth ji pozná,
+		// složí si nad ní `SqliteDialect` a zapne transakce — na rozdíl od
+		// samostatně běžící MongoDB, kde se musely vypínat.
+		database: getAuthDb(),
 
 		// Hesla se nezakládají. Jediná cesta dovnitř je pracovní účet Googlu.
 		emailAndPassword: { enabled: false },
@@ -88,7 +91,11 @@ function createAuth() {
 				},
 			},
 		},
-	});
+	};
+}
+
+function createAuth() {
+	return betterAuth(authOptions());
 }
 
 let auth: ReturnType<typeof createAuth> | undefined;
@@ -97,4 +104,47 @@ export function getAuth() {
 	auth ??= createAuth();
 
 	return auth;
+}
+
+let schemaReady: Promise<void> | undefined;
+
+/**
+ * Založí v `auth.sqlite` tabulky, které tam ještě nejsou.
+ *
+ * S MongoDB tenhle krok nebyl potřeba — dokumentová databáze si kolekce
+ * vyrobila zápisem. SQLite schéma mít musí, a `getMigrations()` ho umí
+ * doplnit: introspektuje, co chybí, a je idempotentní.
+ *
+ * Volá se z obou asynchronních vstupů, kde se relace poprvé čte
+ * (`src/pages/api/auth/[...all].ts` a autorizace v
+ * `src/pages/api/tina/[...routes].ts`). Samostatný příkaz při nasazení by
+ * fungoval taky, ale je to krok, na který se dá zapomenout — a projevilo by
+ * se to až selháním přihlášení. Promise je memoizovaná, takže se migrace
+ * spustí jednou za život procesu a každé další čekání je zadarmo.
+ */
+export function ensureAuthSchema(): Promise<void> {
+	schemaReady ??= (async () => {
+		const { getMigrations } = await import('better-auth/db/migration');
+		const { toBeCreated, toBeAdded, toBeAddedIndexes, runMigrations } =
+			await getMigrations(authOptions());
+
+		if (toBeCreated.length === 0 && toBeAdded.length === 0 && toBeAddedIndexes.length === 0) {
+			return;
+		}
+
+		console.info(
+			`[auth] Doplňuji schéma: ${toBeCreated.length} tabulek, ` +
+				`${toBeAdded.length} sloupců, ${toBeAddedIndexes.length} indexů.`,
+		);
+
+		await runMigrations();
+	})().catch((error) => {
+		// Bez schématu se nikdo nepřihlásí, ale zapamatovat si selhání natrvalo
+		// by znamenalo, že se to nezkusí ani po opravě příčiny (třeba práv
+		// k adresáři). Další požadavek proto začne nanovo.
+		schemaReady = undefined;
+		throw error;
+	});
+
+	return schemaReady;
 }

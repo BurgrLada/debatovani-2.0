@@ -19,7 +19,7 @@ import {
 	type BackendAuthProvider,
 } from '@tinacms/datalayer';
 import databaseClient from '../../../../tina/__generated__/databaseClient';
-import { getAuth } from '../../../lib/auth';
+import { ensureAuthSchema, getAuth } from '../../../lib/auth';
 import { denyAccess } from '../../../lib/access';
 
 export const prerender = false;
@@ -34,6 +34,8 @@ const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
  */
 const BetterAuthBackend = (): BackendAuthProvider => ({
 	isAuthorized: async (req) => {
+		await ensureAuthSchema();
+
 		const session = await getAuth().api.getSession({
 			headers: new Headers(req.headers as Record<string, string>),
 		});

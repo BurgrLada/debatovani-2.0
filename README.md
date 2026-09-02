@@ -16,8 +16,8 @@ a Tina server skončí s ním. V takovém případě spusťte `pnpm exec tinacms
 a `pnpm exec astro dev --background` zvlášť.
 
 ```bash
-pnpm build        # produkční build (self-hosted: MongoDB + zápis přes GitHub API)
-pnpm build:local  # build z lokálních souborů, bez databáze
+pnpm build        # produkční build (self-hosted: index v SQLite + zápis přes GitHub API)
+pnpm build:local  # build z lokálních souborů, bez indexu
 pnpm check        # kontrola typů
 ```
 
@@ -51,6 +51,8 @@ node scripts/migrate-pages.mjs
 | [docs/12-implementace.md](docs/12-implementace.md) | **Implementace** — co je hotové, struktura projektu, jak přidat blok, na co si dát pozor |
 | [docs/13-todo.md](docs/13-todo.md) | **Co zbývá** — seřazené podle toho, co blokuje spuštění |
 | [docs/14-autentizace.md](docs/14-autentizace.md) | **Přihlašování do administrace** — Google Workspace přes better-auth, kdo smí dovnitř, co nastavit |
+| [docs/15-tinacms-vs-decap.md](docs/15-tinacms-vs-decap.md) | **TinaCMS vs. Decap** — zpětné ověření volby proti hotové implementaci: co by odchod ušetřil, co by stál |
+| [docs/16-migrace-sqlite.md](docs/16-migrace-sqlite.md) | **Migrace na SQLite** — odchod od MongoDB k jedinému Node procesu: postup, ověření, nasazení |
 
 ## Rozhodnutá architektura
 
@@ -58,7 +60,7 @@ node scripts/migrate-pages.mjs
 
 - Web je **statické HTML** (`output: 'static'` + adaptér), servírované z cache.
 - Administrace běží jako **`prerender = false` routy uvnitř téhož projektu** — `/admin` a `/api/tina/*` obsluhuje Node proces. Když spadne, web běží dál.
-- Obsah je v **gitu** (Markdown/MDX + JSON), MongoDB drží jen index. Média v S3-kompatibilním úložišti.
+- Obsah je v **gitu** (Markdown/MDX + JSON), index je SQLite soubor vedle procesu — **databázový server projekt nemá**. Média v S3-kompatibilním úložišti.
 - Bloky jsou **`.astro` komponenty se Zod schématem** — editor je jen nadstavba, která do nich sype data.
 - **Rozdělení administrace do samostatné služby je varianta do budoucna**, ne výchozí stav. Sáhne se po ní, až začne vadit redeploy uprostřed editace, kolize React verzí (Puck) nebo sdílené prostředí s přístupovými údaji. Migrace je levná, proto se neřeší dopředu.
 - **Inicializace: nejdřív Astro, pak `@tinacms/cli init`** — ne `create-tina-app`. Detaily a pořadí kroků v [docs/06](docs/06-doporucena-architektura.md), sekce 4.

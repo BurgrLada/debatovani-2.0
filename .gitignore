@@ -17,6 +17,9 @@ pnpm-debug.log*
 .env
 .env.production
 
+# Data mimo git — index Tiny a účty better-authu (výchozí DATA_DIR pro vývoj).
+.data/
+
 # macOS-specific files
 .DS_Store
 

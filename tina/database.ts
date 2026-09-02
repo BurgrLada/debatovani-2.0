@@ -1,9 +1,12 @@
 /**
- * Databáze TinaCMS pro self-hosted režim.
+ * Index TinaCMS pro self-hosted režim.
  *
- * Rozdělení odpovědnosti se nemění: **obsah je v gitu**, databáze drží jen
- * index, ze kterého se odpovídá na dotazy administrace. Když se index ztratí,
- * přeindexuje se z repozitáře.
+ * Rozdělení odpovědnosti: **obsah je v gitu**, index drží jen to, z čeho se
+ * odpovídá na dotazy administrace. Když se index ztratí, přeindexuje se
+ * z repozitáře — dělá to `tinacms build` před každým `astro build`.
+ *
+ * Index není databázový server, ale soubor v `DATA_DIR` (`src/lib/db.ts`).
+ * K provozu tak stačí jediný Node proces; zdůvodnění je v docs/16.
  *
  * Zápis jde přes GitHub API, ne přes lokální pracovní kopii — Node proces na
  * serveru nemá checkout repozitáře. Commity proto vznikají pod servisním
@@ -17,12 +20,8 @@
  */
 import { createDatabase, createLocalDatabase } from '@tinacms/datalayer';
 import { GitHubProvider } from 'tinacms-gitprovider-github';
-import mongodbLevel from 'mongodb-level';
-
-// `mongodb-level` je zabalený jako UMD a svoje exporty vystavuje až za běhu,
-// takže pojmenovaný import z něj selže. Bere se přes výchozí export, kterým
-// je celý `module.exports`.
-const { MongodbLevel } = mongodbLevel as unknown as typeof import('mongodb-level');
+import { SqliteLevel } from 'sqlite-level';
+import { indexPath } from '../src/lib/db';
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
 
@@ -51,11 +50,10 @@ export default isLocal
 				token: requireEnv('GITHUB_PERSONAL_ACCESS_TOKEN'),
 				branch,
 			}),
-			databaseAdapter: new MongodbLevel<string, Record<string, any>>({
-				collectionName: branch,
-				dbName: process.env.MONGODB_DB ?? 'debatovani',
-				mongoUri: requireEnv('MONGODB_URI'),
+			databaseAdapter: new SqliteLevel<string, Record<string, any>>({
+				filename: indexPath(branch),
 			}),
 			// Index se drží po větvích, aby se obsah z různých větví nemíchal.
+			// Vedle prefixu klíčů je větev i v názvu souboru — viz `indexPath()`.
 			namespace: branch,
 		});

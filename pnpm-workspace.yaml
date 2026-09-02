@@ -1,3 +1,7 @@
 allowBuilds:
   esbuild: true
   sharp: true
+  # Nativní modul pod indexem Tiny (sqlite-level) i pod účty better-authu.
+  # Bez tohohle řádku pnpm instalační skript nespustí, binding nevznikne
+  # a modul spadne až za běhu.
+  better-sqlite3: true

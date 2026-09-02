@@ -27,18 +27,23 @@ Google Forms?
 
 ### 2. Self-hosted Tina backend
 **Hotovo v kódu, zbývá nasadit.** Administrace se přihlašuje účtem Google
-Workspace přes better-auth, obsah commituje GitHub API, index je v MongoDB
-a `/api/tina/*` obsluhuje Node proces. Popis a zdůvodnění je
-v [14-autentizace.md](14-autentizace.md).
+Workspace přes better-auth, obsah commituje GitHub API, index je SQLite
+soubor vedle procesu a `/api/tina/*` obsluhuje Node proces. Popis
+a zdůvodnění je v [14-autentizace.md](14-autentizace.md).
 
 Před spuštěním zbývá:
 
 - založit OAuth klienta v Google Cloudu (consent screen **Internal**)
   a vyplnit proměnné podle [.env.example](../.env.example),
-- postavit MongoDB a rozhodnout o zálohách indexu,
+- ~~postavit MongoDB a rozhodnout o zálohách indexu~~ — **odpadlo**,
+  databázový server projekt nemá ([16-migrace-sqlite.md](16-migrace-sqlite.md)).
+  Místo toho stačí **persistentní volume pro `DATA_DIR`** a při nasazení
+  zkopírovat `index-<větev>.sqlite` z buildu (varianta A v docs/16),
 - vytvořit servisní GitHub token pro zápis obsahu,
 - projít celý přihlašovací tok se skutečnými údaji — zatím je ověřené jen
-  to, co jde ověřit bez nich (viz sekce 5 v [14-autentizace.md](14-autentizace.md)).
+  to, co jde ověřit bez nich (viz sekce 5 v [14-autentizace.md](14-autentizace.md)),
+- **ověřit `better-sqlite3` v cílovém image** — prebuilt pro Node 24 existuje
+  a lokálně se stáhne, ale na Alpine (musl) není a chtěl by toolchain.
 
 ### 3. Ověřit přesměrování na produkci
 `src/data/redirects.json` má 356 záznamů a `astro.config.mjs` je předává Astru.
