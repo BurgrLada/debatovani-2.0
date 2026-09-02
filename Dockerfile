@@ -28,7 +28,8 @@ COPY . .
 # nemusí** — hodnoty jsou jen proto, že je `tina/database.ts` vyžaduje.
 # Skutečný token dostane až běžící kontejner z proměnných prostředí.
 ENV TINA_PUBLIC_IS_LOCAL=false \
-	DATA_DIR=/app/seed \
+	INDEX_DIR=/app/index \
+	DATA_DIR=/app/build-data \
 	GITHUB_OWNER=build \
 	GITHUB_REPO=build \
 	GITHUB_PERSONAL_ACCESS_TOKEN=build-only-nepouzije-se
@@ -47,9 +48,14 @@ RUN pnpm prune --prod
 
 FROM node:24-bookworm-slim AS runtime
 
+# Index leží **uvnitř kontejneru**, ne na volume: je to artefakt buildu,
+# odvozený z gitu. Každý kontejner tak má vlastní kopii a rolling update
+# (nový kontejner vedle starého) si nemá s čím kolidovat. Na volume zbývá
+# jediný soubor, který se opravdu nesmí ztratit — `auth.sqlite`.
 ENV NODE_ENV=production \
 	HOST=0.0.0.0 \
 	PORT=4321 \
+	INDEX_DIR=/app/index \
 	DATA_DIR=/data
 
 WORKDIR /app
@@ -57,9 +63,7 @@ WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./package.json
-# Index z buildu. Startovací skript ho při každém spuštění překlopí do
-# `DATA_DIR` — je odvozený z gitu, takže má vždycky odpovídat nasazenému kódu.
-COPY --from=build /app/seed ./seed
+COPY --from=build /app/index ./index
 COPY docker-entrypoint.sh /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && mkdir -p /data
@@ -70,6 +74,9 @@ EXPOSE 4321
 # Statický web i administraci servíruje tentýž proces. Když je potřeba, aby
 # web přežil pád administrace, patří před tohle nginx nebo CDN se statickým
 # `dist/client` — viz docs/17, sekce „Co tahle podoba nasazení obětuje“.
+#
+# Pozor: přítomnost HEALTHCHECK je jedna z podmínek, za kterých Coolify dělá
+# rolling update. Díky indexu uvnitř kontejneru to nevadí.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 	CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||4321)+'/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 

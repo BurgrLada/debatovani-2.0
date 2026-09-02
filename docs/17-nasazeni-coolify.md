@@ -68,29 +68,28 @@ Coolify u každé proměnné nabízí přepínač **Build Variable?**. Rozlišen
 
 **Storages → Add → Volume Mount**, cesta v kontejneru **`/data`**.
 
-Leží tam dva soubory a chovají se opačně:
+**Na volume patří jediný soubor: `auth.sqlite`** — účty a relace. Je to jediná věc v celém nasazení, která není odvozená z něčeho jiného. Bez volume by po každém restartu odešlo přihlášení celé redakce.
 
-| Soubor | Co drží | Když se ztratí |
-|---|---|---|
-| `auth.sqlite` | účty a relace | redakce se odhlásí a přihlásí znovu; schéma si better-auth doplní sám |
-| `index-main.sqlite` | index obsahu pro Tinu | nic — je odvozený z gitu |
+Index (`index-<větev>.sqlite`) je naopak **uvnitř kontejneru**, v `/app/index`, protože je to artefakt buildu: vzniká z gitu při `tinacms build` a jeho ztráta znamená přeindexování, ne ztrátu dat. Restart ho tím vrací do stavu posledního nasazení — úpravy, které redakce mezitím uložila, jsou v gitu a vrátí se příštím buildem.
 
-Startovací skript **index při každém startu přepíše verzí z buildu** a `auth.sqlite` nechá být. Je to vědomé: index má odpovídat právě nasazenému kódu. Redaktorovo uložení mění index i git, takže restart zahodí jen úpravy od posledního buildu — a ty jsou v gitu, takže se vrátí příštím nasazením. Opačná volba („zkopírovat, jen když chybí") by znamenala, že se index od repozitáře postupně rozejde a nikdo si toho nevšimne.
+Že index **není** na volume, je zároveň hlavní pojistka proti rolling update — viz sekce 6.
 
-Bez volume by po každém restartu odešlo přihlášení celé redakce.
+## 6. Rolling update
 
-## 6. Nastavení, které se snadno přehlédne a rozbije data
+Coolify umí při nasazení spustit nový kontejner vedle starého a starý zastavit, teprve až je nový zdravý. Dělá to za čtyř podmínek: nastavený a procházející health check, výchozí pojmenování kontejnerů, ne Docker Compose, žádné mapování portu na hostitele.
 
-**Advanced → vypnout rolling update / zero-downtime deployment.**
+**Podstatný je ten překryv:** krátce běží dva procesy a oba mají připojený týž volume. Kdyby na něm ležel index, nový kontejner by staršímu přepsal soubor pod rukama i s jeho žurnálem. To už není `SQLITE_BUSY`, to je poškození.
 
-Coolify při nasazení běžně spustí nový kontejner vedle starého a teprve pak starý zastaví. Tady by to znamenalo, že **dva procesy sahají na tytéž SQLite soubory zároveň**. SQLite počítá s jediným zapisovatelem; souběžný zápis do `auth.sqlite` je nejlepší způsob, jak si rozbít přihlášení.
+**Řeší to umístění indexu, ne vypnutý přepínač.** Když má každý kontejner index u sebe (`INDEX_DIR=/app/index`), překryv nikoho nezajímá: sdílený zůstane jen `auth.sqlite`, a souběžný přístup dvou procesů k jednomu SQLite souboru na lokálním disku je přesně to, na co je SQLite v režimu WAL stavěná.
 
-Krátký výpadek administrace při nasazení je proti tomu levný — a statický web je v tu chvíli nedostupný taky, což je téma sekce 9.
+Spoléhat místo toho na vypnutý health check by bylo křehké — `HEALTHCHECK` je součástí Dockerfilu a Coolify si ho najde sám (`custom_healthcheck_found`), takže by se rolling update mohl zapnout, aniž by kdokoli cokoli přepnul.
+
+Zbývá jediná výhrada: na úplně prázdném volume by dva souběžně startující kontejnery mohly kolidovat při zakládání tabulek better-authu. Je to jednorázový stav při vůbec prvním nasazení a stačí ho projít jedním kontejnerem.
 
 ## 7. Nasazení a první přihlášení
 
 1. **Deploy.** První build trvá déle (instalace závislostí, indexace 452 dokumentů, generování 453 stránek).
-2. V logu musí být `[start] Index nasazen z buildu: /data/index-main.sqlite`. Když místo toho svítí varování o chybějícím seedu, nesedí `GITHUB_BRANCH` s větví, ze které se stavělo.
+2. V logu musí být `[start] Index: /app/index/index-main.sqlite (…)`. Když místo toho svítí varování o chybějícím indexu, nesedí `GITHUB_BRANCH` s větví, ze které se stavělo.
 3. **Do Google Cloudu doplnit návratovou adresu** `https://debatovani.cz/api/auth/callback/google`. Bez ní Google přihlášení odmítne.
 4. Otevřít `/admin` a přihlásit se. V logu proletí `[auth] Doplňuji schéma: 4 tabulek…` — to je jednorázové vytvoření tabulek v `auth.sqlite`.
 5. Zkusit uložení stránky. V repozitáři má vzniknout commit se zprávou `obsah: úprava …` a podpisem `Upravil: …`.

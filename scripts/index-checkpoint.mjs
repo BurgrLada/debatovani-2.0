@@ -25,9 +25,12 @@ try {
 const branch =
 	process.env.GITHUB_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || process.env.HEAD || 'main';
 
-const file = join(process.env.DATA_DIR ?? '.data', `index-${branch}.sqlite`);
+// Musí sedět s `indexPath()` v `src/lib/db.ts`: index má vlastní adresář
+// a jen bez něj splývá s tím, kde leží účty.
+const file = join(process.env.INDEX_DIR ?? process.env.DATA_DIR ?? '.data', `index-${branch}.sqlite`);
 
 if (!existsSync(file)) {
+	console.log(`[index] ${file} neexistuje — lokální build index nezakládá, končím.`);
 	process.exit(0);
 }
 

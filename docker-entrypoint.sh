@@ -1,38 +1,36 @@
 #!/bin/sh
-# Start kontejneru: připravit `DATA_DIR` a spustit Node proces.
+# Start kontejneru: ověřit, že je z čeho odpovídat, a spustit Node proces.
 #
-# `DATA_DIR` drží dva soubory a chovají se opačně:
+# Dva SQLite soubory, dvě různé životnosti:
 #
-#   auth.sqlite            účty a relace. **Nikdy se nepřepisuje** — kdyby se
-#                          ztratil, redakce se odhlásí. Schéma si při prvním
-#                          přihlášení doplní better-auth sám.
-#   index-<větev>.sqlite   index obsahu. **Přepisuje se při každém startu**
-#                          verzí z buildu, protože je odvozený z gitu a má
-#                          odpovídat právě nasazenému kódu.
+#   $DATA_DIR/auth.sqlite            účty a relace. Na persistentním volume —
+#                                    kdyby se ztratil, redakce se odhlásí.
+#                                    Schéma si při prvním přihlášení doplní
+#                                    better-auth sám.
+#   $INDEX_DIR/index-<větev>.sqlite  index obsahu. **Uvnitř kontejneru**,
+#                                    protože je odvozený z gitu a vzniká při
+#                                    buildu. Restart ho tím vrací do stavu
+#                                    posledního nasazení; úpravy, které mezitím
+#                                    redakce uložila, jsou v gitu a vrátí se
+#                                    příštím buildem.
 #
-# Ten druhý řádek je vědomé rozhodnutí. Redaktorovo uložení mění index i git;
-# restart tedy zahodí jen ty úpravy, které vznikly od posledního buildu — a ty
-# jsou v gitu, takže se vrátí příštím nasazením. Opačná volba („zkopírovat jen
-# když chybí“) by znamenala, že se index od repozitáře postupně rozejde
-# a nikdo si toho nevšimne.
+# Index schválně **není** na volume: Coolify při rolling update pouští nový
+# kontejner vedle starého a oba by na týž soubor sáhly. Takhle má každý
+# kontejner vlastní a překryv nikoho nezajímá.
 set -e
 
 : "${DATA_DIR:=/data}"
+: "${INDEX_DIR:=/app/index}"
 : "${GITHUB_BRANCH:=main}"
 
 mkdir -p "$DATA_DIR"
 
-SEED="/app/seed/index-${GITHUB_BRANCH}.sqlite"
-TARGET="${DATA_DIR}/index-${GITHUB_BRANCH}.sqlite"
+INDEX="${INDEX_DIR}/index-${GITHUB_BRANCH}.sqlite"
 
-if [ -f "$SEED" ]; then
-	# WAL a SHM z minulého běhu musí pryč **před** výměnou hlavního souboru.
-	# SQLite by starý žurnál přiložila k novému indexu a rozbila ho.
-	rm -f "${TARGET}-wal" "${TARGET}-shm"
-	cp "$SEED" "$TARGET"
-	echo "[start] Index nasazen z buildu: $TARGET"
+if [ -f "$INDEX" ]; then
+	echo "[start] Index: $INDEX ($(du -h "$INDEX" | cut -f1))"
 else
-	echo "[start] VAROVÁNÍ: v image chybí $SEED — administrace nebude mít obsah."
+	echo "[start] VAROVÁNÍ: chybí $INDEX — administrace nebude mít obsah."
 	echo "[start] Buildil se image s jinou větví, než je GITHUB_BRANCH=$GITHUB_BRANCH?"
 fi
 

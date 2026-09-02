@@ -2,22 +2,26 @@
  * Kde leží data, která nejsou v gitu.
  *
  * Projekt nemá databázový server. Obojí, co si administrace potřebuje
- * pamatovat, žije jako SQLite soubor v jednom adresáři (`DATA_DIR`):
+ * pamatovat, žije jako SQLite soubor — ale ve **dvou různých adresářích**,
+ * protože každý z těch souborů má jinou životnost:
  *
- *  - `index-<větev>.sqlite` — **index obsahu pro TinaCMS** (`sqlite-level`,
- *    viz `tina/database.ts`). Obsah samotný v něm není, ten zůstává v gitu,
- *    takže ztráta indexu znamená přeindexování, ne ztrátu dat.
- *  - `auth.sqlite` — **účty a relace better-auth** (`src/lib/auth.ts`).
- *    Tenhle soubor odvozený z ničeho není; když se ztratí, redakce se
- *    odhlásí a účty vzniknou znovu při dalším přihlášení.
+ *  - `auth.sqlite` v **`DATA_DIR`** — účty a relace better-auth
+ *    (`src/lib/auth.ts`). Odvozený z ničeho není: když se ztratí, redakce se
+ *    odhlásí a účty vzniknou znovu při dalším přihlášení. **V produkci proto
+ *    `DATA_DIR` patří na persistentní volume.**
+ *  - `index-<větev>.sqlite` v **`INDEX_DIR`** — index obsahu pro TinaCMS
+ *    (`sqlite-level`, viz `tina/database.ts`). Obsah v něm není, ten zůstává
+ *    v gitu, takže je to **čistý artefakt buildu**: vzniká při `tinacms build`
+ *    a ztráta znamená přeindexování, ne ztrátu dat.
  *
- * V produkci proto musí `DATA_DIR` ležet na persistentním volume. Na
- * ephemerálním kontejneru by se index po každém startu stavěl znovu
- * a přihlášení by nepřežilo restart.
+ * Rozdělení není kosmetické. Kdyby index ležel na sdíleném volume, dva
+ * kontejnery při rolling update (Coolify pouští nový vedle starého) by sáhly
+ * na týž soubor — a nový by ten starý přepsal verzí z buildu i s jeho
+ * žurnálem. Když má každý kontejner index u sebe, tenhle překryv nikoho
+ * nezajímá a na volume zbude jediný soubor, který je opravdu potřeba udržet.
  *
- * Rozdělení do dvou souborů je schválné: index je zahoditelný a při buildu
- * se přepisuje celý, relace ne. Sdílet jeden soubor by znamenalo, že se obojí
- * musí zálohovat stejně opatrně.
+ * `INDEX_DIR` je nepovinný; bez něj se index drží vedle účtů, což je při
+ * vývoji to pohodlnější uspořádání.
  */
 import './env';
 import { mkdirSync } from 'node:fs';
@@ -25,13 +29,27 @@ import { join } from 'node:path';
 import Database from 'better-sqlite3';
 
 /**
- * Adresář s daty. Vytvoří se, když neexistuje — `better-sqlite3` nadřazenou
- * složku nezakládá a selhal by až otevřením souboru.
+ * Adresář s účty a relacemi. Vytvoří se, když neexistuje — `better-sqlite3`
+ * nadřazenou složku nezakládá a selhal by až otevřením souboru.
  *
- * Výchozí `.data` je pro vývoj; v produkci se `DATA_DIR` nastavuje výslovně.
+ * Výchozí `.data` je pro vývoj; v produkci se `DATA_DIR` nastavuje výslovně
+ * a míří na persistentní volume.
  */
 export function dataDir(): string {
 	const dir = process.env.DATA_DIR ?? '.data';
+
+	mkdirSync(dir, { recursive: true });
+
+	return dir;
+}
+
+/** Adresář s indexem. Bez `INDEX_DIR` splývá s `DATA_DIR`. */
+export function indexDir(): string {
+	const dir = process.env.INDEX_DIR;
+
+	if (!dir) {
+		return dataDir();
+	}
 
 	mkdirSync(dir, { recursive: true });
 
@@ -47,7 +65,7 @@ export function dataDir(): string {
  * `namespace`), ale samostatný soubor jde zahodit bez ohledu na ostatní.
  */
 export function indexPath(branch: string): string {
-	return join(dataDir(), `index-${branch}.sqlite`);
+	return join(indexDir(), `index-${branch}.sqlite`);
 }
 
 let authDb: Database.Database | undefined;

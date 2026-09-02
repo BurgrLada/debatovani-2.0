@@ -10,12 +10,29 @@
  * `/api/tina/*` jdou na stejný origin jako administrace, takže prohlížeč
  * cookie přiloží sám.
  */
-import { AbstractAuthProvider } from 'tinacms';
+import { AbstractAuthProvider, type LoginStrategy } from 'tinacms';
 import { createAuthClient } from 'better-auth/client';
+import { LoginScreen } from './login-screen';
 
 const authClient = createAuthClient({ basePath: '/api/auth' });
 
 export class GoogleWorkspaceAuthProvider extends AbstractAuthProvider {
+	/**
+	 * Vlastní přihlašovací obrazovka místo výchozího modálu Tiny.
+	 *
+	 * Ten by před přihlášením tvrdil „When you save, changes will be saved to
+	 * the local filesystem“, což u nás neplatí — ukládá se přes GitHub API do
+	 * repozitáře. Text je v Tině natvrdo, takže jediná cesta je nahradit celou
+	 * obrazovku (`tina/login-screen.tsx`).
+	 */
+	getLoginStrategy(): LoginStrategy {
+		return 'LoginScreen';
+	}
+
+	getLoginScreen() {
+		return LoginScreen;
+	}
+
 	/** Odchod na Google a zpět na tutéž obrazovku administrace. */
 	async authenticate() {
 		await authClient.signIn.social({
