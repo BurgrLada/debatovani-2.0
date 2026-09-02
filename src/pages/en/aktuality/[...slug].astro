@@ -1,0 +1,81 @@
+---
+/**
+ * Všechno pod `/en/aktuality/` — výpis se stránkováním i jednotlivé články.
+ * Zrcadlo české routy `src/pages/aktuality/[...slug].astro`, kde je i vysvětlení,
+ * proč jsou obě varianty v jednom souboru.
+ *
+ * Cesta v URL zůstává česká, aby odpovídala rozvržení obsahu
+ * (`src/content/article/<jazyk>/`) a nevznikla druhá sada přesměrování —
+ * anglických článků je devět a všechny měly na starém webu adresu
+ * pod `/aktuality/`.
+ */
+import Base from '../../../layouts/Base.astro';
+import TinaIsland from '@tinacms/astro/TinaIsland.astro';
+import ArticleBody from '../../../components/islands/ArticleBody.astro';
+import NewsList from '../../../components/layout/NewsList.astro';
+import { getArticle, listArticles, type ArticleListItem } from '../../../lib/data';
+import { islands } from '../../../lib/islands';
+import { t } from '../../../lib/i18n';
+import { pageNumberFrom, paginate } from '../../../lib/pagination';
+
+export const prerender = false;
+
+const lang = 'en' as const;
+const strings = t(lang);
+
+const param = (Astro.params.slug ?? '').toString();
+const pageNumber = pageNumberFrom(param || undefined);
+
+const listing =
+	pageNumber === null
+		? null
+		: paginate<ArticleListItem>({
+				items: await listArticles(lang),
+				current: pageNumber,
+				pageSize: 12,
+				base: '/en/aktuality/',
+			});
+
+if (pageNumber !== null && !listing) {
+	return new Response('Not Found', { status: 404 });
+}
+
+// Stránkování se mezi jazyky nekryje (356 vs. 9 článků), takže protějšek
+// hlásíme jen u první strany.
+const translatedPath = listing?.currentPage === 1 ? '/aktuality/' : null;
+
+const article = listing ? null : (await getArticle(param, lang)).data?.article;
+
+if (!listing && !article) {
+	return new Response('Not Found', { status: 404 });
+}
+---
+{
+	listing ? (
+		<Base
+			title={strings.news}
+			description={strings.newsFeedDescription}
+			lang={lang}
+			translatedPath={translatedPath}
+		>
+			<NewsList page={listing} lang={lang} />
+		</Base>
+	) : (
+		<Base
+			title={article!.title}
+			description={article!.perex}
+			image={article!.cover}
+			type="article"
+			lang={lang}
+		>
+			<TinaIsland
+				name="article"
+				wrapper={islands.article.wrapper}
+				params={{ slug: param, lang }}
+				primary
+			>
+				<ArticleBody data={article!} />
+			</TinaIsland>
+		</Base>
+	)
+}

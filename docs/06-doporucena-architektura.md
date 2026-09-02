@@ -54,7 +54,9 @@ Rozhodující je ten druhý řádek tabulky. Kvůli Pucku bychom museli napsat v
 
 **Rozhodnutí: jedna aplikace.** Pro projekt této velikosti a pro tým, který ho bude spravovat spíš nárazově, převáží jednoduchost správy. Dvě služby přidávají pohyblivé součástky, které se musí udržovat i ve chvíli, kdy se na webu půl roku nic neděje.
 
-**Podmínka, bez které to rozhodnutí neplatí:** projekt musí běžet v režimu `output: 'static'` s adaptérem a `prerender = false` **jen** na `/admin` a `/api/tina/*`. Web pak zůstává statické HTML servírované z cache a Node proces obsluhuje pouze administraci. Když se tohle neudělá vědomě, je celý web on-demand a pád administrace ho shodí — tedy přesně ten failure mode, kvůli kterému se odchází z WordPressu.
+~~**Podmínka, bez které to rozhodnutí neplatí:** projekt musí běžet v režimu `output: 'static'` s adaptérem a `prerender = false` **jen** na `/admin` a `/api/tina/*`.~~ Web pak zůstává statické HTML servírované z cache a Node proces obsluhuje pouze administraci. Když se tohle neudělá vědomě, je celý web on-demand a pád administrace ho shodí — tedy přesně ten failure mode, kvůli kterému se odchází z WordPressu.
+
+> **Revidováno 2. 9. 2026:** tahle podmínka **padla, a to vědomě.** Statický build znamenal, že se redaktorova změna objevila návštěvníkovi až po dalším nasazení — v praxi za minuty, s vypnutým automatickým nasazením vůbec. Obsahové stránky se proto vykreslují na vyžádání a Node proces jim před sebou drží cache, kterou uložení v administraci zahodí. Pád procesu tím opravdu shodí i web; výměna byla za okamžitou publikaci. Rozbor, měření i ústupová cesta jsou v [18-okamzita-publikace.md](18-okamzita-publikace.md).
 
 **Rozdělení na dvě služby je varianta do budoucna, ne teď.** Sáhnout po ní má smysl, pokud nastane některá z těchto situací:
 

@@ -1,0 +1,75 @@
+---
+/**
+ * Všechno pod `/aktuality/` — výpis se stránkováním i jednotlivé články.
+ *
+ * **Proč jedna routa místo dvou.** Adresy `/aktuality/2/` (druhá strana) a
+ * `/aktuality/<slug>/` (článek) mají stejný tvar, takže je nejde rozdělit do
+ * dvou rout: Astro dává přednost konkrétnějšímu `[slug]` před `[...page]`,
+ * a ta by čísla stran spolkla a vracela 404. Dokud se web generoval staticky,
+ * problém nebyl — stránkování existovalo jako hotový soubor a routy se nikdy
+ * nepotkaly. Při vykreslování na vyžádání se potkají při každém požadavku,
+ * takže o obou variantách musí rozhodnout jedno místo.
+ *
+ * Rozhoduje tvar adresy: prázdná nebo číslo je výpis, cokoli jiného slug.
+ * Číslo tím pádem nemůže být slugem článku — což je v pořádku, protože slug
+ * vzniká z titulku (`slugify` v `tina/collections/article.ts`).
+ */
+import Base from '../../layouts/Base.astro';
+import TinaIsland from '@tinacms/astro/TinaIsland.astro';
+import ArticleBody from '../../components/islands/ArticleBody.astro';
+import NewsList from '../../components/layout/NewsList.astro';
+import { getArticle, listArticles, type ArticleListItem } from '../../lib/data';
+import { islands } from '../../lib/islands';
+import { t } from '../../lib/i18n';
+import { pageNumberFrom, paginate } from '../../lib/pagination';
+
+export const prerender = false;
+
+const lang = 'cs' as const;
+const strings = t(lang);
+
+const param = (Astro.params.slug ?? '').toString();
+const pageNumber = pageNumberFrom(param || undefined);
+
+const listing =
+	pageNumber === null
+		? null
+		: paginate<ArticleListItem>({
+				items: await listArticles(lang),
+				current: pageNumber,
+				pageSize: 12,
+				base: '/aktuality/',
+			});
+
+if (pageNumber !== null && !listing) {
+	return new Response('Not Found', { status: 404 });
+}
+
+// Stránkování se mezi jazyky nekryje (356 vs. 9 článků), takže protějšek
+// hlásíme jen u první strany.
+const translatedPath = listing?.currentPage === 1 ? '/aktuality/' : null;
+
+const article = listing ? null : (await getArticle(param, lang)).data?.article;
+
+if (!listing && !article) {
+	return new Response('Not Found', { status: 404 });
+}
+---
+{
+	listing ? (
+		<Base
+			title={strings.news}
+			description={strings.newsFeedDescription}
+			lang={lang}
+			translatedPath={translatedPath}
+		>
+			<NewsList page={listing} lang={lang} />
+		</Base>
+	) : (
+		<Base title={article!.title} description={article!.perex} image={article!.cover} type="article">
+			<TinaIsland name="article" wrapper={islands.article.wrapper} params={{ slug: param }} primary>
+				<ArticleBody data={article!} />
+			</TinaIsland>
+		</Base>
+	)
+}

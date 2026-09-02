@@ -5,6 +5,8 @@ import PageBody from '../components/islands/PageBody.astro';
 import { getPage } from '../lib/data';
 import { islands } from '../lib/islands';
 
+export const prerender = false;
+
 const path = 'home';
 const page = await getPage(path);
 const data = page.data?.page;

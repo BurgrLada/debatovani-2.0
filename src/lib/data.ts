@@ -12,6 +12,7 @@ import type { TinaRichTextContent } from '@tinacms/astro';
 import { requestWithMetadata } from '@tinacms/astro/data';
 import type httpClient from '../../tina/__generated__/client';
 import databaseClient from '../../tina/__generated__/databaseClient';
+import { onInvalidate } from './render-cache';
 
 /**
  * Obsah se čte přímo z databáze, ne přes HTTP.
@@ -88,53 +89,133 @@ async function listAll<TNode>(
 	return nodes;
 }
 
-export async function listPages(lang = DEFAULT_LANG) {
-	const nodes = await listAll(client.queries.pageConnection, 'pageConnection');
-	return nodes
-		.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
-		.map((node) => ({ ...node, path: stripLang(node._sys.relativePath) }));
+/**
+ * Výsledky výpisů kolekcí, dokud se obsah nezmění.
+ *
+ * `listAll()` níž prochází kolekci po stránkách přes kurzory — u 347 aktualit
+ * je to řádově sekunda. Bez memoizace by tu cenu platil první požadavek na
+ * **každou** stránku po každém uložení, protože výpisy potřebují i routy,
+ * které vypisují jen jeden dokument (kvůli `hreflang`).
+ *
+ * Zahazuje se spolu s cache vykreslených stránek, takže platí totéž: uložení
+ * v administraci znamená, že se příště načte znovu.
+ */
+const listCache = new Map<string, Promise<unknown>>();
+
+let warmTimer: ReturnType<typeof setTimeout> | undefined;
+
+/**
+ * Po uložení znovu načte výpisy, aniž by na to někdo čekal.
+ *
+ * Bez toho zaplatí průchod kolekcí (u 347 aktualit ~4 s) **první návštěvník**,
+ * který po uložení dorazí. Takhle se to odehraje mezi uložením a jeho
+ * příchodem a on dostane odpověď v desítkách milisekund.
+ *
+ * Odloženo o chvíli, protože jedno uložení v administraci může znamenat víc
+ * zápisů za sebou — přehřívat po každém z nich by kolekce procházelo zbytečně
+ * dokola. Chyby se polykají: je to jen předehřátí, ne funkční cesta, a další
+ * skutečný požadavek si data načte sám.
+ */
+function warmLists(): void {
+	clearTimeout(warmTimer);
+
+	warmTimer = setTimeout(() => {
+		void Promise.all([
+			listPages('cs'),
+			listPages('en'),
+			listArticles('cs'),
+			listArticles('en'),
+		]).catch(() => {});
+	}, 500);
+
+	// Ať proces nedrží naživu jen kvůli předehřátí.
+	warmTimer.unref?.();
 }
 
-export async function listArticles(lang = DEFAULT_LANG) {
-	const nodes = await listAll(client.queries.articleConnection, 'articleConnection');
-	return nodes
-		.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
-		.filter((node) => !node.draft)
-		.map((node) => ({
-			...node,
-			slug: node._sys.filename,
-			categories: (node.categories ?? []).filter((c): c is string => !!c),
-		}))
-		.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
+onInvalidate(() => {
+	listCache.clear();
+	warmLists();
+});
+
+function cachedList<T>(key: string, load: () => Promise<T>): Promise<T> {
+	const existing = listCache.get(key);
+
+	if (existing) {
+		return existing as Promise<T>;
+	}
+
+	// Ukládá se promise, ne výsledek — dva souběžné požadavky na studenou
+	// cache tak kolekci projdou jednou, ne dvakrát.
+	const pending = load().catch((error) => {
+		// Neúspěch se nesmí zapamatovat, jinak by se chyba vracela navždy.
+		listCache.delete(key);
+		throw error;
+	});
+
+	listCache.set(key, pending);
+
+	return pending;
 }
 
-export async function listProjects(lang = DEFAULT_LANG) {
-	const nodes = await listAll(client.queries.projectConnection, 'projectConnection');
-	return nodes
-		.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
-		.map((node) => ({ ...node, slug: node._sys.filename }));
+export function listPages(lang = DEFAULT_LANG) {
+	return cachedList(`listPages:${lang}`, async () => {
+		const nodes = await listAll(client.queries.pageConnection, 'pageConnection');
+		return nodes
+			.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
+			.map((node) => ({ ...node, path: stripLang(node._sys.relativePath) }));
+	});
 }
 
-export async function listPeople(lang = DEFAULT_LANG) {
-	const nodes = await listAll(client.queries.personConnection, 'personConnection');
-	return nodes
-		.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
-		.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+export function listArticles(lang = DEFAULT_LANG) {
+	return cachedList(`listArticles:${lang}`, async () => {
+		const nodes = await listAll(client.queries.articleConnection, 'articleConnection');
+		return nodes
+			.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
+			.filter((node) => !node.draft)
+			.map((node) => ({
+				...node,
+				slug: node._sys.filename,
+				categories: (node.categories ?? []).filter((c): c is string => !!c),
+			}))
+			.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
+	});
 }
 
-export async function listClubs(lang = DEFAULT_LANG) {
-	const nodes = await listAll(client.queries.clubConnection, 'clubConnection');
-	return nodes
-		.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
-		.filter((node) => node.active !== false)
-		.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'cs'));
+export function listProjects(lang = DEFAULT_LANG) {
+	return cachedList(`listProjects:${lang}`, async () => {
+		const nodes = await listAll(client.queries.projectConnection, 'projectConnection');
+		return nodes
+			.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
+			.map((node) => ({ ...node, slug: node._sys.filename }));
+	});
 }
 
-export async function listPartners(lang = DEFAULT_LANG) {
-	const nodes = await listAll(client.queries.partnerConnection, 'partnerConnection');
-	return nodes
-		.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
-		.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+export function listPeople(lang = DEFAULT_LANG) {
+	return cachedList(`listPeople:${lang}`, async () => {
+		const nodes = await listAll(client.queries.personConnection, 'personConnection');
+		return nodes
+			.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
+			.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+	});
+}
+
+export function listClubs(lang = DEFAULT_LANG) {
+	return cachedList(`listClubs:${lang}`, async () => {
+		const nodes = await listAll(client.queries.clubConnection, 'clubConnection');
+		return nodes
+			.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
+			.filter((node) => node.active !== false)
+			.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'cs'));
+	});
+}
+
+export function listPartners(lang = DEFAULT_LANG) {
+	return cachedList(`listPartners:${lang}`, async () => {
+		const nodes = await listAll(client.queries.partnerConnection, 'partnerConnection');
+		return nodes
+			.filter((node) => node._sys.relativePath.startsWith(`${lang}/`))
+			.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+	});
 }
 
 /* ---------- Typy odvozené ze schématu ---------- */

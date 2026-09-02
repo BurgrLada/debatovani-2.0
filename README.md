@@ -54,13 +54,14 @@ node scripts/migrate-pages.mjs
 | [docs/15-tinacms-vs-decap.md](docs/15-tinacms-vs-decap.md) | **TinaCMS vs. Decap** — zpětné ověření volby proti hotové implementaci: co by odchod ušetřil, co by stál |
 | [docs/16-migrace-sqlite.md](docs/16-migrace-sqlite.md) | **Migrace na SQLite** — odchod od MongoDB k jedinému Node procesu: postup, ověření, nasazení |
 | [docs/17-nasazeni-coolify.md](docs/17-nasazeni-coolify.md) | **Nasazení na Coolify** — Dockerfile, proměnné, persistentní volume, na co si dát pozor |
+| [docs/18-okamzita-publikace.md](docs/18-okamzita-publikace.md) | **Okamžitá publikace** — proč web přešel ze statického buildu na vykreslování na vyžádání a co to stálo |
 
 ## Rozhodnutá architektura
 
 **Astro 7 + TypeScript + TinaCMS self-hosted, všechno v jednom projektu.**
 
 - Web je **statické HTML** (`output: 'static'` + adaptér), servírované z cache.
-- Administrace běží jako **`prerender = false` routy uvnitř téhož projektu** — `/admin` a `/api/tina/*` obsluhuje Node proces. Když spadne, web běží dál.
+- Administrace i obsahové stránky běží v **jednom Node procesu**. Stránky se vykreslují na vyžádání z indexu a proces jim před sebou drží cache, kterou uložení v administraci zahodí — změna je proto vidět hned ([docs/18](docs/18-okamzita-publikace.md)). Cenou je, že pád procesu shodí i web.
 - Obsah je v **gitu** (Markdown/MDX + JSON), index je SQLite soubor vedle procesu — **databázový server projekt nemá**. Média jsou v gitu taky, přes vlastní knihovnu (`src/lib/media.ts`), protože self-hosted Tina žádnou nedodává.
 - Bloky jsou **`.astro` komponenty se Zod schématem** — editor je jen nadstavba, která do nich sype data.
 - **Rozdělení administrace do samostatné služby je varianta do budoucna**, ne výchozí stav. Sáhne se po ní, až začne vadit redeploy uprostřed editace, kolize React verzí (Puck) nebo sdílené prostředí s přístupovými údaji. Migrace je levná, proto se neřeší dopředu.

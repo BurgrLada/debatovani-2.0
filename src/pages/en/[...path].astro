@@ -9,25 +9,14 @@ import PageBody from '../../components/islands/PageBody.astro';
 import { getPage, listPages } from '../../lib/data';
 import { islands } from '../../lib/islands';
 
-// Jazyk se uvnitř `getStaticPaths` musí psát literálem — Astro tu funkci
-// vytrhne do vlastního modulu, kde proměnné z frontmatteru neexistují.
+export const prerender = false;
+
 const lang = 'en' as const;
 
-export async function getStaticPaths() {
-	const [pages, translated] = await Promise.all([listPages('en'), listPages('cs')]);
-	const czech = new Set(translated.map((page) => page.path));
-
-	return pages
-		.filter((page) => page.path !== 'home')
-		.map((page) => ({
-			params: { path: page.path },
-			props: { translatedPath: czech.has(page.path) ? `/${page.path}/` : null },
-		}));
-}
-
-const { translatedPath } = Astro.props;
 const path = (Astro.params.path ?? '').toString();
-const page = await getPage(path, lang);
+
+const [page, translated] = await Promise.all([getPage(path, lang), listPages('cs')]);
+const translatedPath = translated.some((item) => item.path === path) ? `/${path}/` : null;
 const data = page.data?.page;
 if (!data) return new Response('Not Found', { status: 404 });
 ---

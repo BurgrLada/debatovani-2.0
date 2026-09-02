@@ -10,6 +10,8 @@ import PageBody from '../../components/islands/PageBody.astro';
 import { getPage } from '../../lib/data';
 import { islands } from '../../lib/islands';
 
+export const prerender = false;
+
 const lang = 'en' as const;
 const path = 'home';
 const page = await getPage(path, lang);

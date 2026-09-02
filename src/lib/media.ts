@@ -18,6 +18,7 @@ import './env';
 import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { commitMessage } from './editor';
+import { invalidateRenderCache } from './render-cache';
 
 /** Kořen médií pod `public/`. Musí sedět s `mediaRoot` v `tina/config.ts`. */
 export const MEDIA_ROOT = 'media';
@@ -254,6 +255,10 @@ export async function readMedia(path: string): Promise<ArrayBuffer> {
 }
 
 export async function writeMedia(path: string, bytes: Uint8Array): Promise<void> {
+	// Nahraný soubor se může objevit na stránce, která už je v cache —
+	// třeba když redaktor vymění logo v nastavení webu.
+	invalidateRenderCache(`nahráno ${path}`);
+
 	if (isLocal) {
 		await mkdir(dirname(localPath(path)), { recursive: true });
 		await writeFile(localPath(path), bytes);
@@ -280,6 +285,8 @@ export async function writeMedia(path: string, bytes: Uint8Array): Promise<void>
 }
 
 export async function removeMedia(path: string): Promise<void> {
+	invalidateRenderCache(`smazáno ${path}`);
+
 	if (isLocal) {
 		await rm(localPath(path), { force: true });
 

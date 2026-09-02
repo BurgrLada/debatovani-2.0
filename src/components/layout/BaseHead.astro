@@ -49,7 +49,7 @@ const ogImage = image ? new URL(image, Astro.site) : null;
 {description && <meta name="description" content={description} />}
 <link rel="canonical" href={canonical} />
 {noindex && <meta name="robots" content="noindex, nofollow" />}
-<link rel="sitemap" href="/sitemap-index.xml" />
+<link rel="sitemap" href="/sitemap.xml" />
 <link rel="alternate" type="application/rss+xml" title={strings.newsFeedTitle} href={localizeHref('/rss.xml', lang)} />
 {translatedPath && (
 	<>

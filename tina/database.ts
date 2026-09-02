@@ -23,6 +23,7 @@ import { GitHubProvider } from 'tinacms-gitprovider-github';
 import { SqliteLevel } from 'sqlite-level';
 import { indexPath } from '../src/lib/db';
 import { commitMessage } from '../src/lib/editor';
+import { invalidateRenderCache } from '../src/lib/render-cache';
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
 
@@ -63,9 +64,18 @@ function signedGitProvider(): GitProvider {
 	const forMessage = (summary: string) =>
 		new GitHubProvider({ ...options, commitMessage: commitMessage(summary) });
 
+	// Zápis do gitu je zároveň jediné spolehlivé místo, kde se pozná, že se
+	// obsah změnil — cache vykreslených stránek se proto zahazuje tady.
+	// Až *po* úspěšném zápisu: kdyby commit selhal, není co invalidovat.
 	return {
-		onPut: (key, value) => forMessage(`obsah: úprava ${key}`).onPut(key, value),
-		onDelete: (key) => forMessage(`obsah: smazání ${key}`).onDelete(key),
+		onPut: async (key, value) => {
+			await forMessage(`obsah: úprava ${key}`).onPut(key, value);
+			invalidateRenderCache(`uložen ${key}`);
+		},
+		onDelete: async (key) => {
+			await forMessage(`obsah: smazání ${key}`).onDelete(key);
+			invalidateRenderCache(`smazán ${key}`);
+		},
 	};
 }
 

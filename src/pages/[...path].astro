@@ -10,24 +10,14 @@ import PageBody from '../components/islands/PageBody.astro';
 import { getPage, listPages } from '../lib/data';
 import { islands } from '../lib/islands';
 
-export async function getStaticPaths() {
-	// Anglická verze je jen částečná, takže `hreflang` se smí vypsat jen
-	// u stránek, které protějšek opravdu mají. Zjistí se tady, kde jsou
-	// oba seznamy stejně po ruce — za běhu by to znamenalo dotaz na stránku.
-	const [pages, translated] = await Promise.all([listPages(), listPages('en')]);
-	const english = new Set(translated.map((page) => page.path));
+export const prerender = false;
 
-	return pages
-		.filter((page) => page.path !== 'home')
-		.map((page) => ({
-			params: { path: page.path },
-			props: { translatedPath: english.has(page.path) ? `/${page.path}/` : null },
-		}));
-}
-
-const { translatedPath } = Astro.props;
 const path = (Astro.params.path ?? '').toString();
-const page = await getPage(path);
+
+// Anglická verze je jen částečná, takže `hreflang` se smí vypsat jen
+// u stránek, které protějšek opravdu mají.
+const [page, translated] = await Promise.all([getPage(path), listPages('en')]);
+const translatedPath = translated.some((item) => item.path === path) ? `/${path}/` : null;
 const data = page.data?.page;
 if (!data) return new Response('Not Found', { status: 404 });
 ---

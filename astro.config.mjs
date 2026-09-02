@@ -1,7 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
-import sitemap from '@astrojs/sitemap';
 import icon from 'astro-icon';
 import node from '@astrojs/node';
 import tina from '@tinacms/astro/integration';
@@ -26,9 +25,16 @@ const redirects = {
 	'/home-pumori/': '/',
 };
 
-// Web je statický; jedinou routou na vyžádání je /tina-island (endpoint
-// vizuální editace), kterou obsluhuje Node adaptér. Když Node proces spadne,
-// staticky vygenerovaný web běží dál — viz docs/06, sekce 2.
+// **Obsahové stránky se vykreslují na vyžádání** (`prerender = false`) a Node
+// proces jim před sebou drží cache vykresleného HTML (`src/middleware.ts`).
+// Uložení v administraci cache zahodí, takže je změna vidět hned — původní
+// statický build ji ukázal až po dalším nasazení, tedy za minuty.
+//
+// Cena je vědomá a jde proti docs/06 sekci 2: dřív web přežil pád Node
+// procesu, teď s ním spadne taky. Zdůvodnění a ústupová cesta jsou v docs/18.
+//
+// `output: 'static'` zůstává, protože předgenerovat je pořád co — 404, portál
+// a administrace. Routy, které čtou obsah, se z toho vyjímají jednotlivě.
 export default defineConfig({
 	site: process.env.SITE_URL ?? 'https://debatovani.cz',
 	output: 'static',
@@ -36,9 +42,6 @@ export default defineConfig({
 	redirects,
 	integrations: [
 		mdx(),
-		// Čeština běží na kořeni, angličtina pod `/en/`. Sitemap z toho poskládá
-		// vzájemné `hreflang` odkazy u stránek, které mají obě jazykové verze.
-		sitemap({ i18n: { defaultLocale: 'cs', locales: { cs: 'cs-CZ', en: 'en-GB' } } }),
 		icon(),
 		tina(),
 	],
@@ -51,6 +54,13 @@ export default defineConfig({
 		plugins: [tailwindcss(), tinaAdminDevRedirect()],
 		// Bez tohoto se @tinacms/astro resolvuje per-modul na každý studený
 		// request a Vite pokaždé znovu kompiluje .astro zdroje balíčku.
-		ssr: { noExternal: ['@tinacms/astro', '@tinacms/bridge'] },
+		//
+		// `tinacms` je tu z jiného důvodu: serverový build ho reálně potřebuje
+		// jen kvůli `import 'tinacms/dist/client'` v `tina/database.ts` (přes
+		// `@tinacms/datalayer`) — malému souboru bez vlastních závislostí. Když
+		// zůstane externí, `pnpm prune --prod` musí v `node_modules` nechat celý
+		// balíček i s Reactovou administrací a mermaidem (235 MB). Zabalením sem
+		// se ten jeden soubor otiskne do výstupu a `tinacms` může do dev.
+		ssr: { noExternal: ['@tinacms/astro', '@tinacms/bridge', 'tinacms'] },
 	},
 });

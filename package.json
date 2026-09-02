@@ -7,12 +7,12 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"astro dev\"",
-    "build": "tinacms build -c \"astro build\" && node scripts/index-checkpoint.mjs",
-    "build:local": "TINA_PUBLIC_IS_LOCAL=true tinacms build --local --skip-cloud-checks -c \"astro build\"",
+    "dev": "TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"node scripts/patch-admin-html.mjs && astro dev\"",
+    "build": "tinacms build -c \"node scripts/patch-admin-html.mjs && astro build\" && node scripts/index-checkpoint.mjs",
+    "build:local": "TINA_PUBLIC_IS_LOCAL=true tinacms build --local --skip-cloud-checks -c \"node scripts/patch-admin-html.mjs && astro build\"",
     "preview": "astro preview",
     "check": "astro check",
-    "tina:build": "TINA_PUBLIC_IS_LOCAL=true tinacms build --local --skip-cloud-checks",
+    "tina:build": "TINA_PUBLIC_IS_LOCAL=true tinacms build --local --skip-cloud-checks && node scripts/patch-admin-html.mjs",
     "migrate:articles": "node scripts/migrate-articles.mjs",
     "migrate:pages": "node scripts/migrate-pages.mjs",
     "auth:migrate": "node scripts/auth-migrate.mjs",
@@ -41,7 +41,6 @@
     "sqlite-level": "^2.1.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.3",
-    "tinacms": "^3.12.1",
     "tinacms-gitprovider-github": "^4.1.16"
   },
   "devDependencies": {
@@ -53,6 +52,7 @@
     "cheerio": "^1.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "tinacms": "^3.12.1",
     "turndown": "^7.2.4",
     "typescript": "^6.0.3"
   },

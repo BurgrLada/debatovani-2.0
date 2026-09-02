@@ -88,7 +88,7 @@ Zbývá jediná výhrada: na úplně prázdném volume by dva souběžně startu
 
 ## 7. Nasazení a první přihlášení
 
-1. **Deploy.** První build trvá déle (instalace závislostí, indexace 452 dokumentů, generování 453 stránek).
+1. **Deploy.** První build trvá déle (instalace závislostí). Od přechodu na vykreslování na vyžádání se negeneruje 453 stránek, takže `pnpm build` spadl z 1 m 24 s na ~31 s.
 2. V logu musí být `[start] Index: /app/index/index-main.sqlite (…)`. Když místo toho svítí varování o chybějícím indexu, nesedí `GITHUB_BRANCH` s větví, ze které se stavělo.
 3. **Do Google Cloudu doplnit návratovou adresu** `https://debatovani.cz/api/auth/callback/google`. Bez ní Google přihlášení odmítne.
 4. Otevřít `/admin` a přihlásit se. V logu proletí `[auth] Doplňuji schéma: 4 tabulek…` — to je jednorázové vytvoření tabulek v `auth.sqlite`.
@@ -113,13 +113,11 @@ Poslední řádek stojí za skutečné vyzkoušení, ne jen odškrtnutí — je 
 
 ## 9. Co tahle podoba nasazení obětuje
 
-Musí to zaznít, protože to jde proti [06-doporucena-architektura.md](06-doporucena-architektura.md), sekci 2.
+**Pád Node procesu shodí celý web, ne jen administraci.**
 
-Návrh počítá s tím, že **statický web běží dál, i když administrace spadne** — statické HTML má servírovat nginx nebo CDN a Node proces má obsluhovat jen `/admin` a `/api/*`. V téhle podobě servíruje **všechno tentýž proces**, takže jeho pád shodí i web.
+Původní návrh ([06](06-doporucena-architektura.md), sekce 2) počítal s tím, že statické HTML servíruje nginx nebo CDN a Node proces obsluhuje jen `/admin` a `/api/*`. Od přechodu na okamžitou publikaci se ale **obsahové stránky vykreslují na vyžádání** ([18-okamzita-publikace.md](18-okamzita-publikace.md)), takže žádné statické HTML k servírování nezbývá — a jeden proces drží všechno.
 
-Je to vědomá volba pro start: jedna služba, jedna konfigurace, žádná duplicita statických souborů. Kdyby to začalo vadit, rozdělení je přímočaré — přidat druhý zdroj (nginx nebo Coolify static site) nad `dist/client` a na Node proces poslat jen `/admin`, `/api/*` a `/tina-island`. Obsah `dist/client` je k tomu připravený; není potřeba měnit kód.
-
-**Kdy po tom sáhnout:** až bude web dost navštěvovaný na to, aby výpadek administrace znamenal výpadek webu, nebo až se před web postaví CDN.
+Byla to vědomá výměna: zpoždění publikace o minuty bylo pro redakci horší než riziko výpadku. Ústupová cesta i podmínky, kdy po ní sáhnout, jsou v docs/18 sekci 5.
 
 ## 10. Automatické nasazení po uložení obsahu
 
@@ -135,9 +133,17 @@ Tři možnosti, seřazené podle toho, jak brzy stojí za zvážení:
 
 ## 11. Velikost image
 
-**1,13 GB.** Většinu z toho tvoří médiá: 291 MB v `public/media` a jejich kopie ve vygenerovaném `dist/client`. Je to přímý důsledek rozhodnutí nechat média v gitu ([06](06-doporucena-architektura.md), otázka 2) — u externího úložiště by image spadl řádově na desetinu.
+**899 MB**, po osekání z původních 1,13 GB. Skládá se z:
 
-Není to problém k řešení teď, ale je to číslo, které poroste s každým nahraným souborem, a je to nejsilnější praktický argument, který by jednou mohl vést k R2.
+| | |
+|---|---|
+| `node_modules` | 317 MB |
+| `dist` (z toho 291 MB média) | 348 MB |
+| základní image | ~230 MB |
+
+Těch odstraněných 235 MB byl balíček `tinacms` s celou Reactovou administrací a mermaidem. Server z něj potřebuje jediný soubor (`tinacms/dist/client`, přes `@tinacms/datalayer`), takže stačilo přidat `tinacms` do `vite.ssr.noExternal` — ten soubor se otiskne do serverového výstupu a balíček může zpátky do `devDependencies`.
+
+Zbylá média jsou důsledek rozhodnutí nechat je v gitu ([06](06-doporucena-architektura.md), otázka 2). Je to číslo, které poroste s každým nahraným souborem, a nejsilnější praktický argument, který by jednou mohl vést k R2.
 
 ## 12. Zálohy
 

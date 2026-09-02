@@ -8,6 +8,8 @@
 import type { APIRoute } from 'astro';
 import { listArticles } from '../../lib/data';
 
+export const prerender = false;
+
 /** Rubrika, ze které portál bere aktuality. */
 const PORTAL_CATEGORY = 'Portál';
 const LIMIT = 10;
