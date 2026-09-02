@@ -12,13 +12,29 @@
  * Styly jsou inline schválně. Administrace nemá Tailwind z webu, takže by se
  * třídy nepropsaly, a načítat kvůli jedné obrazovce vlastní CSS do bundlu
  * Tiny je víc práce než užitku.
+ *
+ * **Past, na kterou se tu dá snadno naletět:** Tina obrazovku vykresluje
+ * prostým voláním funkce (`loginScreen({ handleAuthenticate })`), ne jako
+ * JSX element. Hooky napsané přímo v exportované funkci by proto patřily
+ * *Tinině* komponentě — a v okamžiku přihlášení, kdy se větev přepne na
+ * administraci, by z jejího renderu zmizely. React na to odpoví chybou
+ * „Rendered fewer hooks than expected“, `#root` zůstane prázdný a Tina to
+ * po dvou sekundách přebarví na zavádějící „Failed loading TinaCMS assets“.
+ *
+ * Proto je export bez hooků a jen vrací element vnitřní komponenty: ta se
+ * mountuje normálně a svůj stav si drží sama.
  */
 import { useState } from 'react';
 import type { LoginScreenProps } from 'tinacms';
 
 const BRAND = '#0d3c61';
 
-export function LoginScreen({ handleAuthenticate }: LoginScreenProps) {
+/** Bez hooků — jen obálka, viz poznámka v hlavičce souboru. */
+export function LoginScreen(props: LoginScreenProps) {
+	return <LoginForm {...props} />;
+}
+
+function LoginForm({ handleAuthenticate }: LoginScreenProps) {
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
